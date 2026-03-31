@@ -1,0 +1,20 @@
+﻿# Dependencias y artefactos locales
+node_modules/
+__pycache__/
+*.py[cod]
+.venv/
+
+# Configuración y datos privados
+.env
+.env.*
+config.yaml
+auth/
+temp/
+logs/
+*.session.json
+*.cookies.json
+
+# Archivos generados localmente
+dist/
+build/
+coverage/

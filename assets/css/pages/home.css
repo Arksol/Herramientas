@@ -1,0 +1,5 @@
+.home {
+  padding-block: var(--space-lg);
+  display: grid;
+  gap: var(--space-md);
+}
