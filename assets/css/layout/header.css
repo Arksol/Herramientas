@@ -1,0 +1,21 @@
+.site-header {
+  background: var(--color-surface);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.site-header nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md) 0;
+}
+
+.brand {
+  font-weight: 700;
+}
+
+.menu {
+  list-style: none;
+  display: flex;
+  gap: var(--space-md);
+}
