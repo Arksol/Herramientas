@@ -134,6 +134,7 @@ function platformAdapter() {
   if (host.endsWith("blackboard.com")) return { name: "Blackboard UVM", selectors: ["[aria-label*='transcript' i]", "[data-testid*='caption' i]", "[class*='transcript' i]", "[class*='caption' i]"] };
   if (host.endsWith("class.com")) return { name: "Class UVM", selectors: ["[aria-label*='transcript' i]", "[data-testid*='caption' i]", "[class*='transcript' i]", "[class*='caption' i]"] };
   if (host.endsWith("mastermind.ac") || host.endsWith("mastermind.com")) return { name: "Mastermind", selectors: ["[data-testid*='transcript' i]", "[class*='transcript' i]", "[class*='subtitle' i]", "[class*='caption' i]"] };
+  if (host.endsWith("academia.eduardorosas.mx")) return { name: "Finanzas - Academia Eduardo Rosas", selectors: ["[data-testid*='transcript' i]", "[class*='transcript' i]", "[class*='caption' i]", "[class*='subtitle' i]"] };
   if (host.endsWith("coursera.org")) return { name: "Coursera", selectors: ["[data-testid*='transcript' i]", "[class*='transcript' i]", "[class*='caption' i]", "[class*='subtitle' i]"] };
   if (host.endsWith("youtube.com") || host === "youtu.be") return { name: "YouTube", selectors: ["ytd-transcript-segment-renderer", "#segments-container", ".ytp-caption-segment"] };
   return { name: "Sitio compatible", selectors: ["[data-testid*='transcript' i]", "[class*='transcript' i]", "[class*='caption' i]", "[class*='subtitle' i]"] };

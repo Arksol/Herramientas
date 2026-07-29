@@ -1,4 +1,4 @@
-﻿export type SessionState = "active" | "paused" | "inactive" | "blocked" | "signed_out";
+export type SessionState = "active" | "paused" | "inactive" | "blocked" | "signed_out";
 
 export type Session = {
   authenticated: boolean;
@@ -9,7 +9,7 @@ export type Session = {
   tools?: string[];
 };
 
-const apiUrl = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:3030";
+import { apiUrl, serviceError } from "./base";
 const isTauri = () => "__TAURI_INTERNALS__" in window;
 
 async function native<T>(command: string, args?: Record<string, unknown>): Promise<T> {
@@ -19,8 +19,8 @@ async function native<T>(command: string, args?: Record<string, unknown>): Promi
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, { credentials: "include", headers: { "Content-Type": "application/json", ...(options.headers ?? {}) }, ...options });
-  const body = response.status === 204 ? null : await response.json();
-  if (!response.ok) throw new Error(body?.error?.message ?? "No se pudo conectar con el servicio local.");
+  const body = response.status === 204 ? null : await response.json().catch(() => null);
+  if (!response.ok) throw new Error(body?.error?.message ?? serviceError());
   return body as T;
 }
 

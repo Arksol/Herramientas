@@ -5,7 +5,8 @@ import { analyzeSource, summarizeText, type SourceAnalysis, type SourceKind, typ
 type Props = { disabled: boolean; onActivity: () => Promise<void> | void };
 type ClassSourceKind = Extract<SourceKind, "text" | "link" | "file" | "video">;
 
-const platforms = ["Class (UVM)", "Blackboard UVM", "EBAC", "Mastermind", "Platzi", "Coursera", "YouTube", "Otra plataforma autorizada"];
+const platforms = ["Class (UVM)", "Blackboard UVM", "EBAC", "Mastermind", "Platzi", "Coursera", "YouTube", "Finanzas - Academia Eduardo Rosas", "Otra plataforma autorizada"];
+const platformLinks: Record<string, string> = { "Finanzas - Academia Eduardo Rosas": "https://academia.eduardorosas.mx/courses/enrolled/882564" };
 const sourceLabels: Record<ClassSourceKind, string> = {
   text: "Texto o transcripción",
   link: "Enlace",
@@ -136,7 +137,7 @@ export default function ClassDownloadPanel({ disabled, onActivity }: Props) {
       <p className="eyebrow">Clase autorizada</p>
       <h2>Procesar clase</h2>
       <p>La herramienta no elude protecciones, sesiones, DRM ni límites de las plataformas. Usa descargas oficiales, transcripciones visibles, archivos propios o grabaciones con permiso.</p>
-      <label>Plataforma<select value={platform} onChange={(event) => { setPlatform(event.target.value); resetPlan(); }} disabled={disabled || busy}>{platforms.map((item) => <option key={item}>{item}</option>)}</select></label>
+      <label>Plataforma<select value={platform} onChange={(event) => { const next = event.target.value; setPlatform(next); if (platformLinks[next]) setOfficialUrl(platformLinks[next]); resetPlan(); }} disabled={disabled || busy}>{platforms.map((item) => <option key={item}>{item}</option>)}</select></label>{platformLinks[platform] && <p className="field-help">Curso registrado: <a href={platformLinks[platform]} target="_blank" rel="noreferrer">Abrir Academia Eduardo Rosas</a></p>}
       <label>Nombre de la clase<input value={classTitle} onFocus={onActivity} onChange={(event) => { setClassTitle(event.target.value); resetPlan(); }} placeholder="Ej. Introducción a JavaScript" disabled={disabled || busy} /></label>
       <label>Enlace oficial de la clase<input value={officialUrl} onFocus={onActivity} onChange={(event) => { setOfficialUrl(event.target.value); resetPlan(); if (sourceKind === "link") setSource(event.target.value); }} placeholder="https://..." disabled={disabled || busy} /></label>
       <label>Carpeta para organizar el archivo<input value={outputFolder} onFocus={onActivity} onChange={(event) => { setOutputFolder(event.target.value); resetPlan(); }} placeholder="C:\\Cursos\\Clase 01" disabled={disabled || busy} /></label>

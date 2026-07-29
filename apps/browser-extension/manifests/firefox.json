@@ -25,6 +25,8 @@
                              "*://*.blackboard.com/*",
                              "*://coursera.org/*",
                              "*://*.coursera.org/*",
+                             "*://academia.eduardorosas.mx/*",
+                             "*://*.academia.eduardorosas.mx/*",
                              "*://youtube.com/*",
                              "*://*.youtube.com/*",
                              "*://youtu.be/*"
@@ -62,6 +64,8 @@
                                                 "*://*.blackboard.com/*",
                                                 "*://coursera.org/*",
                                                 "*://*.coursera.org/*",
+                             "*://academia.eduardorosas.mx/*",
+                             "*://*.academia.eduardorosas.mx/*",
                                                 "*://youtube.com/*",
                                                 "*://*.youtube.com/*",
                                                 "*://youtu.be/*"

@@ -36,7 +36,7 @@ const classPlans = new Map();
 const recentAuditEvents = [];
 const CONTEXT_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 const TOOL_IDS = ["resumidor", "clases", "ingles", "tecnologia", "musica", "visuales", "codigo", "legal"];
-const CLASS_PLATFORMS = ["Class (UVM)", "Blackboard UVM", "EBAC", "Mastermind", "Platzi", "Coursera", "YouTube", "Otra plataforma autorizada"];
+const CLASS_PLATFORMS = ["Class (UVM)", "Blackboard UVM", "EBAC", "Mastermind", "Platzi", "Coursera", "YouTube", "Finanzas - Academia Eduardo Rosas", "Otra plataforma autorizada"];
 
 const TOOL_POLICIES = Object.freeze({
   resumidor: { requiresActiveSession: true, actions: ["plan", "analyze", "summarize", "obsidian-save", "obsidian-append"], sourceKinds: ["text", "link", "file", "image", "video"] },
@@ -68,6 +68,7 @@ const CLASS_PLATFORM_RULES = Object.freeze({
   "Platzi": ["platzi.com"],
   "Coursera": ["coursera.org"],
   "YouTube": ["youtube.com", "youtu.be"],
+  "Finanzas - Academia Eduardo Rosas": ["academia.eduardorosas.mx"],
   "Otra plataforma autorizada": []
 });
 

@@ -19,7 +19,7 @@ export type ClassPlan = {
   expiresAt: string | number;
 };
 
-const apiUrl = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:3030";
+import { apiUrl, serviceError } from "./base";
 const isTauri = () => "__TAURI_INTERNALS__" in window;
 
 async function invoke<T>(command: string, payload?: Record<string, string | boolean>): Promise<T> {
@@ -36,7 +36,7 @@ async function localRequest<T>(path: string, body: unknown): Promise<T> {
     body: JSON.stringify(body)
   });
   const payload = response.status === 204 ? null : await response.json().catch(() => null);
-  if (!response.ok) throw new Error(payload?.error?.message ?? "No se pudo conectar con el servicio local.");
+  if (!response.ok) throw new Error(payload?.error?.message ?? serviceError());
   return payload as T;
 }
 

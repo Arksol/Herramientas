@@ -6,6 +6,8 @@ import LegalAnalysisPanel from "./components/LegalAnalysisPanel";
 import AgentSettingsPanel from "./components/AgentSettingsPanel";
 import ToolContractPanel from "./components/ToolContractPanel";
 import SpecialistAgentTaskPanel from "./components/SpecialistAgentTaskPanel";
+import ContextBubble from "./components/ContextBubble";
+import { isLocalWebApp } from "./api/base";
 import { readPersonalAgentSettings } from "./api/agentSettings";
 import { getPendingContext, type ContextPayload } from "./api/context";
 import { tools, type Tool } from "./data/tools";
@@ -19,7 +21,6 @@ const emptyDraft: DraftTool = { name: "", purpose: "", inputs: "", outputs: "", 
 function App() {
   const [mode, setMode] = useState<Mode>("integrated");
   const [activeTool, setActiveTool] = useState<Tool | null>(null);
-  const [launcherOpen, setLauncherOpen] = useState(false);
   const [contextPaused, setContextPaused] = useState(false);
   const [draftOpen, setDraftOpen] = useState(false);
   const [draft, setDraft] = useState<DraftTool>(emptyDraft);
@@ -54,7 +55,6 @@ function App() {
   }, [routedContextId, session.authenticated]);
 
   const openTool = (tool: Tool) => {
-    setLauncherOpen(false);
     if (tool.protected && !session.authenticated) {
       setLoginError("");
       setPendingTool(tool);
@@ -99,7 +99,7 @@ function App() {
     <header className="topbar">
       <button className="brand" onClick={() => setActiveTool(null)} aria-label="Ir al inicio">H</button>
       <nav aria-label="Navegación principal"><a className="active" href="#inicio">Inicio</a><a href="#herramientas">Herramientas</a><a href="#acerca">Acerca de</a></nav>
-      <div className="topbar-actions"><span className={`local-badge ${serviceOnline === false ? "offline" : ""}`}>* {serviceOnline === false ? "Sin servicio" : "Local"}</span><button className="text-button" onClick={() => setAgentSettingsOpen(true)}>Asistente</button>{session.authenticated && <button className="text-button" onClick={logout}>Cerrar sesión</button>}</div>
+      <div className="topbar-actions"><span className={`local-badge ${serviceOnline === false ? "offline" : ""}`}>* {serviceOnline === false ? (isLocalWebApp ? "Servicio local desconectado" : "Modo web") : "Local"}</span>{serviceOnline === false && !isLocalWebApp && <a className="text-button" href="http://localhost:1420/">Abrir versión local</a>}<button className="text-button" onClick={() => setAgentSettingsOpen(true)}>Asistente</button>{session.authenticated && <button className="text-button" onClick={logout}>Cerrar sesión</button>}</div>
     </header>
     <section id="inicio" className="hero">
       <p className="eyebrow">Aplicación de escritorio - local-first</p><h1>Herramientas</h1>
@@ -112,8 +112,7 @@ function App() {
       <button className="tool-card add-card" onClick={() => setDraftOpen(true)}><span className="plus">+</span><h2>Crear nueva herramienta</h2><p>Registra nombre, propósito, entradas, salidas y si requiere acceso protegido.</p>{draftSaved && <span className="draft-chip">Borrador: {draftSaved.name}</span>}</button>
     </section>
     <aside className="mode-panel"><span>{mode === "integrated" ? "Aplicación local" : "Contexto seleccionado"}</span><strong>{mode === "integrated" ? "Tus datos permanecen en este equipo." : "La extensión solo comparte contenido confirmado."}</strong></aside>
-    <button className={`launcher ${launcherOpen ? "launcher-open" : ""}`} onClick={() => setLauncherOpen(!launcherOpen)} aria-expanded={launcherOpen} aria-label="Abrir lanzador de herramientas">*</button>
-    {launcherOpen && <section className="launcher-menu" aria-label="Lanzador contextual"><div><span>{modeLabel}</span><button onClick={() => setContextPaused(!contextPaused)}>{contextPaused ? "Reanudar" : "Pausar"}</button></div><p>{contextPaused ? "Captura contextual pausada." : selectedText}</p>{tools.map((tool) => <button key={tool.id} onClick={() => openTool(tool)}>{tool.icon} {tool.name}</button>)}</section>}
+    <ContextBubble tools={tools} modeLabel={modeLabel} selectedText={selectedText} paused={contextPaused} onTogglePause={() => setContextPaused((current) => !current)} onOpenTool={openTool} />
     {draftOpen && <section className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="draft-title"><form className="access-modal draft-modal" onSubmit={saveDraft}><button type="button" className="modal-close" onClick={() => setDraftOpen(false)} aria-label="Cerrar">x</button><p className="eyebrow">Borrador local</p><h2 id="draft-title">Nueva herramienta</h2><label>Nombre<input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} required /></label><label>Propósito<textarea value={draft.purpose} onChange={(event) => setDraft({ ...draft, purpose: event.target.value })} required /></label><label>Entradas esperadas<input value={draft.inputs} onChange={(event) => setDraft({ ...draft, inputs: event.target.value })} placeholder="Texto, archivos, imágenes..." /></label><label>Resultado esperado<input value={draft.outputs} onChange={(event) => setDraft({ ...draft, outputs: event.target.value })} placeholder="Nota, prompt, reporte..." /></label><label className="checkbox-row"><input type="checkbox" checked={draft.protected} onChange={(event) => setDraft({ ...draft, protected: event.target.checked })} /> Requiere acceso protegido</label><button className="primary" disabled={!draft.name.trim() || !draft.purpose.trim()}>Guardar borrador</button><small>El borrador no se publica ni se activa hasta pasar revisión de seguridad.</small></form></section>}
     {agentSettingsOpen && <AgentSettingsPanel onClose={() => setAgentSettingsOpen(false)} />}
     {pendingTool && <section className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="access-title"><form className="access-modal" onSubmit={submitLogin}><button type="button" className="modal-close" onClick={() => setPendingTool(null)} aria-label="Cerrar">x</button><p className="eyebrow">Acceso protegido</p><h2 id="access-title">{pendingTool.name}</h2><p>{session.configured === false ? "Crea el código local de acceso. Se guardará solamente como hash protegido en esta aplicación." : "Introduce el código configurado. Tienes un máximo de tres intentos antes de un bloqueo temporal."}</p><label htmlFor="access-code">{session.configured === false ? "Nuevo código de acceso" : "Código de acceso"}</label><input id="access-code" type="password" minLength={8} autoFocus value={accessCode} onChange={(event) => setAccessCode(event.target.value)} autoComplete="current-password" /><p className="form-error" aria-live="polite">{loginError}</p><button className="primary" disabled={loginBusy || (session.configured === false && accessCode.length < 8)}>{loginBusy ? "Validando..." : session.configured === false ? "Configurar y desbloquear" : "Desbloquear herramienta"}</button><small>La sesión caduca 24 horas después del acceso correcto.</small></form></section>}

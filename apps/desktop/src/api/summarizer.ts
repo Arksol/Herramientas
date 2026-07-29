@@ -1,15 +1,15 @@
-﻿export type Summary = { markdown: string; keyPoints: string[]; sourceCharacters: number };
+export type Summary = { markdown: string; keyPoints: string[]; sourceCharacters: number };
 export type SourceKind = "text" | "link" | "image" | "video" | "file";
 export type SourceAnalysis = { kind: SourceKind; text: string; sourceLabel: string; usedLocalAi: boolean; notes: string[] };
 export type ObsidianStatus = { configured: boolean; endpoint: string; vaultHint: string };
 
-const apiUrl = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:3030";
+import { apiUrl, serviceError } from "./base";
 const isTauri = () => "__TAURI_INTERNALS__" in window;
 
 async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, { credentials: "include", headers: { "Content-Type": "application/json", ...(options.headers ?? {}) }, ...options });
   const body = response.status === 204 ? null : await response.json().catch(() => null);
-  if (!response.ok) throw new Error(body?.error?.message ?? "No se pudo conectar con el servicio local.");
+  if (!response.ok) throw new Error(body?.error?.message ?? serviceError());
   return body as T;
 }
 

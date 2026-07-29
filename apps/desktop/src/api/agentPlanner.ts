@@ -16,7 +16,7 @@ export type AgentPlanRequest = {
   personalContext?: PersonalContext;
 };
 
-const apiUrl = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:3030";
+import { apiUrl, serviceError } from "./base";
 const isTauri = () => "__TAURI_INTERNALS__" in window;
 
 export async function generateAgentPlan(request: AgentPlanRequest): Promise<AgentPlan> {

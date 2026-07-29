@@ -8,7 +8,7 @@ Herramientas es una aplicación de escritorio local-first para convertir materia
 - Procesamiento local de texto, enlaces públicos, archivos de texto, imágenes y vídeos, con degradación cuando falte una dependencia.
 - Gestor de clases para flujos autorizados, sin descargar DRM ni inspeccionar cookies o credenciales.
 - Agentes para inglés C1, tecnología, música, prompts visuales, código y análisis legal.
-- Extensión contextual para Chrome Dev, Firefox y Helium: burbuja movible que solo envía texto visible confirmado.
+- Extensión contextual para Chrome Dev, Firefox y Helium: burbuja movible que solo envía texto visible confirmado, con adaptador para Finanzas - Academia Eduardo Rosas.
 - Análisis legal informativo de términos, políticas de privacidad y acuerdos: identifica datos, terceros, retención, identidad digital, cláusulas de licencia y preguntas antes de aceptar. No sustituye asesoría jurídica.
 
 ## IA local recomendada
@@ -30,9 +30,7 @@ Los modelos se descargan por separado y no se incluyen en este repositorio. Ante
 ## Ejecutar y verificar
 
 ```powershell
-cd apps/desktop
 npm install
-npm run service
 npm run dev
 ```
 
@@ -48,5 +46,7 @@ npm run verify
 - Capturas, caché de extensión y contexto transitorio caducan a los siete días.
 - Las notas de Obsidian y archivos originales no se borran automáticamente.
 - El análisis legal es información general. No determina una infracción, responsabilidad o validez de un contrato; las decisiones relevantes requieren revisar el documento completo y, cuando corresponda, asesoría profesional en la jurisdicción aplicable.
+
+Curso registrado: [Finanzas - Academia Eduardo Rosas](https://academia.eduardorosas.mx/courses/enrolled/882564).
 
 Consulta [IA local multimodal](docs/ia-local-multimodal.md), [Análisis legal](docs/analisis-legal.md), [Seguridad](docs/seguridad.md) y [Extensión de navegador](docs/extension-navegador.md).

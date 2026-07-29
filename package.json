@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "dev": "node scripts/dev-local.mjs",
     "build": "npm --prefix apps/desktop run build",
     "vercel-build": "npm --prefix apps/desktop ci && npm --prefix apps/desktop run build"
   }
