@@ -1,4 +1,4 @@
-﻿# Dependencias y artefactos locales
+# Dependencias y artefactos locales
 node_modules/
 __pycache__/
 *.py[cod]
@@ -18,3 +18,12 @@ logs/
 dist/
 build/
 coverage/
+
+# Dependencias y artefactos de la aplicación de escritorio
+apps/desktop/node_modules/
+apps/desktop/dist/
+apps/desktop/src-tauri/target/
+apps/desktop/*.tsbuildinfo
+
+apps/desktop/.auth.local.json
+apps/desktop/.obsidian.local.json
