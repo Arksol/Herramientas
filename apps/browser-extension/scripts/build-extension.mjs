@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const root = path.resolve(import.meta.dirname, "..");
-const targets = ["chrome-dev", "firefox", "helium"];
+const targets = ["chrome", "chrome-dev", "firefox", "helium"];
 const commonFiles = [
   ["src/background.js", "background.js"],
   ["src/content-script.js", "content-script.js"],
@@ -19,7 +19,8 @@ for (const target of targets) {
   for (const [from, to] of commonFiles) {
     await fs.copyFile(path.join(root, from), path.join(outDir, to));
   }
-  await fs.copyFile(path.join(root, "manifests", `${target}.json`), path.join(outDir, "manifest.json"));
+  const manifestName = target === "chrome" ? "chrome-dev" : target;
+  await fs.copyFile(path.join(root, "manifests", `${manifestName}.json`), path.join(outDir, "manifest.json"));
 }
 
 console.log(`Built browser extension targets: ${targets.join(", ")}`);

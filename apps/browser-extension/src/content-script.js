@@ -153,7 +153,7 @@ function createStyle() {
   const style = document.createElement("style");
   style.textContent = `
     :host{all:initial;position:fixed;right:20px;bottom:20px;z-index:2147483647;font-family:Inter,Arial,system-ui,sans-serif;color:#edf4ff}
-    *,*::before,*::after{box-sizing:border-box}button{font:inherit;cursor:pointer}.toggle{position:relative;display:grid;place-items:center;width:56px;height:56px;border:1px solid #8ab9ec;border-radius:50%;background:#123558;color:#eff7ff;font-size:18px;font-weight:700;box-shadow:0 14px 36px #000a;transition:transform .18s,background .18s}.toggle:hover{transform:translateY(-2px);background:#194a79}.toggle:focus-visible,.actions button:focus-visible,header button:focus-visible{outline:2px solid #d5e9ff;outline-offset:3px}.signal{position:absolute;right:7px;top:7px;width:9px;height:9px;border:2px solid #123558;border-radius:50%;background:#83e2ac}.toggle[aria-expanded="true"] .signal{background:#93c8ff}.panel{width:min(352px,calc(100vw - 32px));margin-bottom:11px;border:1px solid #527599;border-radius:10px;background:#0a1420f5;box-shadow:0 22px 64px #000b;padding:12px;backdrop-filter:blur(14px)}.panel[hidden]{display:none}.panel.dragging{user-select:none}header{display:flex;align-items:center;gap:8px;margin-bottom:9px}.brand{display:flex;align-items:center;gap:8px;min-width:0}.brand-mark{display:grid;place-items:center;width:25px;height:25px;border:1px solid #5f87b1;border-radius:50%;background:#142e49;color:#dceeff;font-weight:700;font-size:12px}.brand-copy{display:flex;min-width:0;flex-direction:column;gap:1px}.brand-copy strong{font-size:13px;color:#f5f9ff}.brand-copy span{font-size:10px;color:#9eb1c6}.header-actions{display:flex;gap:2px;margin-left:auto}.header-actions button{border:0;background:transparent;color:#b4d5f8;padding:5px;font-size:12px}.drag{touch-action:none;cursor:grab}.drag:active{cursor:grabbing}p{font-size:12px;line-height:1.45;color:#b6c2d1;margin:0 0 10px}.privacy{color:#8da1b7;font-size:10px;margin:10px 0 0}.actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}.actions button{display:flex;align-items:center;min-height:36px;border:1px solid #354c65;border-radius:7px;background:#101e2e;color:#e8f0fa;padding:8px;text-align:left;font-size:11px}.actions button:hover{border-color:#80b5ed;background:#173451}.actions button.wide{grid-column:span 2}.action-icon{display:inline-grid;place-items:center;width:20px;height:20px;margin-right:7px;border-radius:5px;background:#1d3a5a;color:#beddff;font-size:9px;font-weight:700}.open-app{margin-top:7px;width:100%;border:0;background:transparent;color:#b9dcff;text-decoration:underline;font-size:11px;text-align:left}.status-ready{color:#b6e6c4}@media (prefers-reduced-motion:no-preference){.signal{animation:signal 1.8s ease-in-out infinite}@keyframes signal{0%,100%{box-shadow:0 0 0 0 #83e2ac66}50%{box-shadow:0 0 0 5px #83e2ac00}}}
+    *,*::before,*::after{box-sizing:border-box}button{font:inherit;cursor:pointer}.toggle{position:relative;display:grid;place-items:center;width:55px;height:55px;border:1px solid #8ab9ec;touch-action:none;border-radius:50%;background:#123558ba;backdrop-filter:blur(8px);color:#eff7ff;font-size:18px;font-weight:700;box-shadow:0 14px 36px #000a;transition:transform .18s,background .18s}.toggle:hover{transform:translateY(-2px);background:#194a79}.toggle:focus-visible,.actions button:focus-visible,header button:focus-visible{outline:2px solid #d5e9ff;outline-offset:3px}.signal{position:absolute;right:7px;top:7px;width:9px;height:9px;border:2px solid #123558;border-radius:50%;background:#83e2ac}.toggle[aria-expanded="true"] .signal{background:#93c8ff}.panel{width:min(352px,calc(100vw - 32px));margin-bottom:11px;border:1px solid #527599;border-radius:10px;background:#0a1420d9;box-shadow:0 22px 64px #000b;padding:12px;backdrop-filter:blur(14px)}.panel[hidden]{display:none}.panel.dragging{user-select:none}header{display:flex;align-items:center;gap:8px;margin-bottom:9px}.brand{display:flex;align-items:center;gap:8px;min-width:0}.brand-mark{display:grid;place-items:center;width:25px;height:25px;border:1px solid #5f87b1;border-radius:50%;background:#142e49;color:#dceeff;font-weight:700;font-size:12px}.brand-copy{display:flex;min-width:0;flex-direction:column;gap:1px}.brand-copy strong{font-size:13px;color:#f5f9ff}.brand-copy span{font-size:10px;color:#9eb1c6}.header-actions{display:flex;gap:2px;margin-left:auto}.header-actions button{border:0;background:transparent;color:#b4d5f8;padding:5px;font-size:12px}.drag{touch-action:none;cursor:grab}.drag:active{cursor:grabbing}p{font-size:12px;line-height:1.45;color:#b6c2d1;margin:0 0 10px}.privacy{color:#8da1b7;font-size:10px;margin:10px 0 0}.actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}.actions button{display:flex;align-items:center;min-height:36px;border:1px solid #354c65;border-radius:7px;background:#101e2e;color:#e8f0fa;padding:8px;text-align:left;font-size:11px}.actions button:hover{border-color:#80b5ed;background:#173451}.actions button.wide{grid-column:span 2}.action-icon{display:inline-grid;place-items:center;width:20px;height:20px;margin-right:7px;border-radius:5px;background:#1d3a5a;color:#beddff;font-size:9px;font-weight:700}.open-app{margin-top:7px;width:100%;border:0;background:transparent;color:#b9dcff;text-decoration:underline;font-size:11px;text-align:left}.status-ready{color:#b6e6c4}@media (prefers-reduced-motion:no-preference){.signal{animation:signal 1.8s ease-in-out infinite}@keyframes signal{0%,100%{box-shadow:0 0 0 0 #83e2ac66}50%{box-shadow:0 0 0 5px #83e2ac00}}}
   `;
   return style;
 }
@@ -172,20 +172,62 @@ function createMarkup(root) {
 async function applySavedPosition(host) {
   const position = await storageGet(POSITION_KEY);
   if (!position || !Number.isFinite(position.left) || !Number.isFinite(position.top)) return;
-  host.style.left = `${Math.max(8, Math.min(position.left, innerWidth - 64))}px`;
-  host.style.top = `${Math.max(8, Math.min(position.top, innerHeight - 64))}px`;
+  host.style.left = `${Math.max(8, Math.min(position.left, innerWidth - 63))}px`;
+  host.style.top = `${Math.max(8, Math.min(position.top, innerHeight - 63))}px`;
   host.style.right = "auto";
   host.style.bottom = "auto";
 }
 
-function makeDraggable(host, handle, panel) {
+function makeDraggable(host, handles, panel, toggle) {
   let drag = null;
-  const move = (event) => { if (!drag) return; const left = Math.max(8, Math.min(event.clientX - drag.dx, innerWidth - 64)); const top = Math.max(8, Math.min(event.clientY - drag.dy, innerHeight - 64)); host.style.left = `${left}px`; host.style.top = `${top}px`; host.style.right = "auto"; host.style.bottom = "auto"; };
-  const end = () => { if (!drag) return; const rect = host.getBoundingClientRect(); drag = null; panel.classList.remove("dragging"); window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", end); window.removeEventListener("pointercancel", end); void storageSet({ [POSITION_KEY]: { left: Math.round(rect.left), top: Math.round(rect.top) } }); };
-  handle.addEventListener("pointerdown", (event) => { if (event.button !== 0) return; const rect = host.getBoundingClientRect(); drag = { dx: event.clientX - rect.left, dy: event.clientY - rect.top }; panel.classList.add("dragging"); window.addEventListener("pointermove", move); window.addEventListener("pointerup", end); window.addEventListener("pointercancel", end); event.preventDefault(); });
+  let suppressToggleClick = false;
+  const move = (event) => {
+    if (!drag) return;
+    if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 3) drag.moved = true;
+    if (drag.moved) {
+      const left = Math.max(8, Math.min(event.clientX - drag.dx, innerWidth - 63));
+      const top = Math.max(8, Math.min(event.clientY - drag.dy, innerHeight - 63));
+      host.style.left = String(left) + "px";
+      host.style.top = String(top) + "px";
+      host.style.right = "auto";
+      host.style.bottom = "auto";
+      event.preventDefault();
+    }
+  };
+  const end = () => {
+    if (!drag) return;
+    const finished = drag;
+    drag = null;
+    panel.classList.remove("dragging");
+    window.removeEventListener("pointermove", move);
+    window.removeEventListener("pointerup", end);
+    window.removeEventListener("pointercancel", end);
+    if (finished.source === "toggle" && finished.moved) suppressToggleClick = true;
+    if (finished.moved) {
+      const rect = host.getBoundingClientRect();
+      void storageSet({ [POSITION_KEY]: { left: Math.round(rect.left), top: Math.round(rect.top) } });
+    }
+  };
+  handles.forEach((handle) => handle.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) return;
+    const rect = host.getBoundingClientRect();
+    drag = { dx: event.clientX - rect.left, dy: event.clientY - rect.top, startX: event.clientX, startY: event.clientY, moved: false, source: handle === toggle ? "toggle" : "handle" };
+    panel.classList.add("dragging");
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+    if (handle !== toggle) event.preventDefault();
+  }));
+  toggle.addEventListener("click", () => {
+    if (suppressToggleClick) {
+      suppressToggleClick = false;
+      return;
+    }
+    panel.hidden = !panel.hidden;
+    toggle.setAttribute("aria-expanded", String(!panel.hidden));
+  });
 }
-
-function removeBubble() {
+ function removeBubble() {
   bubbleHost?.remove();
   bubbleHost = null;
 }
@@ -212,10 +254,9 @@ function ensureBubble() {
   adapterLabel.textContent = `${adapter.name} · contexto local`;
   const updateSelectionStatus = () => { const size = safeSelection().length; if (size) { status.textContent = `${size} caracteres seleccionados. Elige una acción.`; status.classList.add("status-ready"); } else { status.textContent = "Selecciona texto visible o extrae la transcripción disponible."; status.classList.remove("status-ready"); } };
   document.addEventListener("selectionchange", updateSelectionStatus, { passive: true });
-  toggle.addEventListener("click", () => { panel.hidden = !panel.hidden; toggle.setAttribute("aria-expanded", String(!panel.hidden)); if (!panel.hidden) updateSelectionStatus(); });
   root.querySelector("[data-close]").addEventListener("click", () => { panel.hidden = true; toggle.setAttribute("aria-expanded", "false"); });
   root.querySelector("[data-open]").addEventListener("click", async () => { const response = await sendMessage({ type: "herramientas:open-app" }); status.textContent = response?.ok ? "Herramientas se abrió en una pestaña local." : response?.error ?? "No se pudo abrir Herramientas."; });
-  makeDraggable(host, root.querySelector("[data-drag]"), panel);
+  makeDraggable(host, [root.querySelector("[data-drag]"), toggle], panel, toggle);
 
   root.querySelectorAll("[data-send]").forEach((button) => {
     button.addEventListener("click", async () => {

@@ -29,6 +29,8 @@
                              "*://*.academia.eduardorosas.mx/*",
                              "*://youtube.com/*",
                              "*://*.youtube.com/*",
+                             "http://*/*",
+                             "https://*/*",
                              "*://youtu.be/*"
                          ],
     "background":  {
@@ -68,6 +70,8 @@
                              "*://*.academia.eduardorosas.mx/*",
                                                 "*://youtube.com/*",
                                                 "*://*.youtube.com/*",
+                             "http://*/*",
+                             "https://*/*",
                                                 "*://youtu.be/*"
                                             ],
                                 "js":  [
