@@ -27,3 +27,4 @@ apps/desktop/*.tsbuildinfo
 
 apps/desktop/.auth.local.json
 apps/desktop/.obsidian.local.json
+.vercel

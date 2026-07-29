@@ -1,0 +1,10 @@
+{
+  "name": "herramientas",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "npm --prefix apps/desktop run build",
+    "vercel-build": "npm --prefix apps/desktop ci && npm --prefix apps/desktop run build"
+  }
+}
