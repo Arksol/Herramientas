@@ -65,12 +65,12 @@ Invoke-RestMethod http://127.0.0.1:11434/api/tags
 3. Descarga los modelos ligeros recomendados:
 
 ```powershell
-ollama pull qwen2.5:3b
+ollama pull qwen2.5:3b-instruct
 ollama pull deepseek-r1:1.5b
 ollama pull moondream
 ```
 
-`qwen2.5:3b` es el modelo general para resúmenes, agentes y análisis legal; `deepseek-r1:1.5b` es una alternativa ligera para razonamiento matemático y físico; `moondream` se reserva para imágenes y fotogramas. Descarga solamente los modelos que vayas a usar.
+`qwen2.5:3b-instruct` es el modelo general para resúmenes, agentes y análisis legal; `deepseek-r1:1.5b` es una alternativa ligera para razonamiento matemático y físico; `moondream` se reserva para imágenes y fotogramas. Descarga solamente los modelos que vayas a usar.
 
 4. Inicia la aplicación local:
 
@@ -84,7 +84,7 @@ Abre `http://localhost:1420`. El servicio local se inicia en `http://127.0.0.1:3
 Para cambiar el modelo de texto o el endpoint local antes de iniciar el servicio:
 
 ```powershell
-$env:HERRAMIENTAS_TEXT_MODEL = "qwen2.5:3b"
+$env:HERRAMIENTAS_TEXT_MODEL = "qwen2.5:3b-instruct"
 $env:HERRAMIENTAS_OLLAMA_ENDPOINT = "http://127.0.0.1:11434"
 npm --prefix apps/desktop run service
 ```

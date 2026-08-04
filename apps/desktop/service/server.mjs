@@ -27,7 +27,7 @@ const MAX_ATTEMPTS = 3;
 const LOCKOUT_MS = 15 * 60 * 1000;
 const COOKIE_NAME = "herramientas_session";
 const OLLAMA_ENDPOINT = process.env.HERRAMIENTAS_OLLAMA_ENDPOINT ?? "http://127.0.0.1:11434";
-const TEXT_MODEL = process.env.HERRAMIENTAS_TEXT_MODEL ?? "qwen2.5:3b";
+const TEXT_MODEL = process.env.HERRAMIENTAS_TEXT_MODEL ?? "qwen2.5:3b-instruct";
 const OBSIDIAN_ENDPOINT = process.env.HERRAMIENTAS_OBSIDIAN_ENDPOINT ?? "https://127.0.0.1:27124";
 const sessions = new Map();
 const attempts = new Map();
@@ -38,7 +38,7 @@ const CONTEXT_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 const TOOL_IDS = ["resumidor", "clases", "ingles", "tecnologia", "musica", "visuales", "codigo", "legal", "matematicas", "fisica", "profesores"];
 const CLASS_PLATFORMS = ["Class (UVM)", "Blackboard UVM", "EBAC", "Mastermind", "Platzi", "Coursera", "YouTube", "Finanzas - Academia Eduardo Rosas", "Otra plataforma autorizada"];
 const LOCAL_MODEL_CATALOG = [
-  { id: "qwen2.5:3b", name: "Qwen 2.5 3B", size: "1.9 GB", purpose: "Profesor general, español, resúmenes y práctica", recommendedFor: ["ingles", "tecnologia", "musica", "matematicas", "fisica", "profesores"], command: "ollama pull qwen2.5:3b", licenseNote: "Revisa la licencia Qwen del modelo 3B antes de redistribuirlo." },
+  { id: "qwen2.5:3b-instruct", name: "Qwen 2.5 3B Instruct", size: "1.9 GB", purpose: "Profesor general, español, resúmenes y práctica", recommendedFor: ["ingles", "tecnologia", "musica", "matematicas", "fisica", "profesores"], command: "ollama pull qwen2.5:3b-instruct", licenseNote: "Revisa la licencia Qwen del modelo 3B antes de redistribuirlo." },
   { id: "deepseek-r1:1.5b", name: "DeepSeek-R1 1.5B", size: "1.1 GB", purpose: "Razonamiento ligero para matemáticas y física", recommendedFor: ["matematicas", "fisica", "profesores"], command: "ollama pull deepseek-r1:1.5b", licenseNote: "Revisa la ficha del modelo y la licencia del modelo base destilado." },
   { id: "qwen3:4b", name: "Qwen 3 4B", size: "2.5 GB", purpose: "Alternativa con mejor razonamiento y contexto", recommendedFor: ["ingles", "tecnologia", "musica", "matematicas", "fisica", "profesores"], command: "ollama pull qwen3:4b", licenseNote: "Confirma los términos del modelo antes de distribuir una aplicación con él." }
 ];
