@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::{env, fs, path::PathBuf, process::Command, sync::Mutex, time::{SystemTime, UNIX_EPOCH}};
 use tauri::{Manager, State};
 
-const SESSION_TTL_MS: u128 = 24 * 60 * 60 * 1000;
+const GUEST_TTL_MS: u128 = 60 * 60 * 1000;
 const IDLE_TTL_MS: u128 = 10 * 60 * 1000;
 const LOCKOUT_MS: u128 = 15 * 60 * 1000;
 const MAX_ATTEMPTS: u8 = 3;
@@ -22,6 +22,7 @@ struct Session {
   last_activity_at: u128,
   expires_at: u128,
   paused: bool,
+  access: String,
 }
 
 struct AuthState {
@@ -36,6 +37,9 @@ struct AuthState {
 #[serde(rename_all = "camelCase")]
 struct AuthStatus {
   authenticated: bool,
+  access: String,
+  can_persist: bool,
+  can_create_tools: bool,
   configured: bool,
   state: String,
   expires_at: Option<u128>,
@@ -55,11 +59,14 @@ fn session_state(session: &Session) -> String {
 
 fn status(state: &mut AuthState) -> AuthStatus {
   if let Some(session) = &state.session {
-    if now() >= session.expires_at { state.session = None; }
+    if session.access == "guest" && now() >= session.expires_at { state.session = None; }
   }
   match &state.session {
-    Some(session) => AuthStatus { authenticated: true, configured: state.access_code_hash.is_some(), state: session_state(session), expires_at: Some(session.expires_at), last_activity_at: Some(session.last_activity_at), tools: vec!["resumidor", "clases"] },
-    None => AuthStatus { authenticated: false, configured: state.access_code_hash.is_some(), state: "signed_out".into(), expires_at: None, last_activity_at: None, tools: vec![] },
+    Some(session) => {
+      let administrator = session.access == "administrator";
+      AuthStatus { authenticated: administrator, access: session.access.clone(), can_persist: administrator, can_create_tools: administrator, configured: state.access_code_hash.is_some(), state: session_state(session), expires_at: if administrator { None } else { Some(session.expires_at) }, last_activity_at: Some(session.last_activity_at), tools: vec!["resumidor", "clases", "multi-profesor", "visuales", "codigo", "legal"] }
+    },
+    None => AuthStatus { authenticated: false, access: "none".into(), can_persist: false, can_create_tools: false, configured: state.access_code_hash.is_some(), state: "signed_out".into(), expires_at: None, last_activity_at: None, tools: vec![] },
   }
 }
 
@@ -71,12 +78,12 @@ fn save_config(state: &AuthState) -> Result<(), String> {
 
 fn require_valid_session(state: &mut AuthState) -> Result<(), String> {
   let current = status(state);
-  if current.authenticated { Ok(()) } else { Err("Se requiere acceso autorizado.".into()) }
+  if current.access != "none" { Ok(()) } else { Err("Inicia una sesión temporal o de administrador.".into()) }
 }
 
 fn require_active_session(state: &mut AuthState) -> Result<(), String> {
   let current = status(state);
-  if !current.authenticated { return Err("Se requiere acceso autorizado.".into()); }
+  if current.access == "none" { return Err("Inicia una sesión temporal o de administrador.".into()); }
   match current.state.as_str() {
     "active" => Ok(()),
     "paused" => Err("La sesion esta pausada. Reanudala antes de procesar contenido.".into()),
@@ -233,6 +240,10 @@ fn ffmpeg_binary() -> PathBuf {
     }
   }
   PathBuf::from("ffmpeg")
+}
+fn require_administrator(state: &mut AuthState) -> Result<(), String> {
+  let current = status(state);
+  if current.access == "administrator" && current.state == "active" { Ok(()) } else { Err("Esta acción solo está disponible para el administrador local.".into()) }
 }
 fn whisper_binary() -> String {
   env::var("HERRAMIENTAS_WHISPER_BIN").unwrap_or_else(|_| "whisper-cli".into())
@@ -420,15 +431,15 @@ async fn generate_agent_plan(tool_id: String, agent_id: String, task: String, pr
   let (assigned_tool, name, instruction, actions, expected_outcome) = match agent_id.as_str() {
     "academic-synthesis-agent" => ("resumidor", "Agente de Sintesis Academica", "Distingue hechos, conceptos y dudas. Organiza una nota revisable sin inventar datos.", ["Delimita la fuente autorizada y el resultado de aprendizaje.", "Extrae conceptos, relaciones y dudas verificables.", "Prepara una nota y preguntas de repaso antes de guardar."], "Una nota revisable con ideas clave y una accion de repaso."),
     "authorized-resources-agent" => ("clases", "Agente de Recursos Autorizados", "Elige una ruta oficial o de estudio contextual permitida; nunca propongas evadir controles.", ["Comprueba que el recurso sea autorizado.", "Elige una transcripcion, seleccion o archivo propio como fuente.", "Prepara el resumen sin automatizar descargas ni la grabacion."], "Un flujo permitido y una fuente clara para estudiar."),
-    "english-c1-tutor-agent" => ("ingles", "Agente Tutor C1", "Ajusta la dificultad, exige produccion activa y explica los errores con ejemplos breves.", ["Define habilidad, contexto y evidencia de mejora.", "Crea una practica breve de comprension y produccion.", "Cierra con correccion y repeticion espaciada."], "Una practica C1 con una respuesta activa y un criterio de mejora."),
-    "technical-tutor-agent" => ("tecnologia", "Agente Tutor Tecnico", "Alterna explicacion, practica y comprobacion; no ejecutes codigo ni modifiques archivos.", ["Define el concepto y el resultado observable.", "Disena un ejercicio pequeno y seguro.", "Relaciona el resultado con un proyecto o la siguiente practica."], "Una ruta de aprendizaje corta con ejercicio y verificacion."),
-    "music-tutor-agent" => ("musica", "Agente Tutor de Musica", "Propon practica deliberada con una habilidad, una metrica y una reflexion breve.", ["Elige una habilidad musical y nivel de dificultad.", "Disena tecnica, escucha o composicion en un bloque breve.", "Define como registrar el resultado sin retener audio."], "Una sesion musical concreta con metrica de practica."),
+    "english-c1-tutor-agent" => ("multi-profesor", "Agente Tutor C1", "Ajusta la dificultad, exige produccion activa y explica los errores con ejemplos breves.", ["Define habilidad, contexto y evidencia de mejora.", "Crea una practica breve de comprension y produccion.", "Cierra con correccion y repeticion espaciada."], "Una practica C1 con una respuesta activa y un criterio de mejora."),
+    "technical-tutor-agent" => ("multi-profesor", "Agente Tutor Tecnico", "Alterna explicacion, practica y comprobacion; no ejecutes codigo ni modifiques archivos.", ["Define el concepto y el resultado observable.", "Disena un ejercicio pequeno y seguro.", "Relaciona el resultado con un proyecto o la siguiente practica."], "Una ruta de aprendizaje corta con ejercicio y verificacion."),
+    "music-tutor-agent" => ("multi-profesor", "Agente Tutor de Musica", "Propon practica deliberada con una habilidad, una metrica y una reflexion breve.", ["Elige una habilidad musical y nivel de dificultad.", "Disena tecnica, escucha o composicion en un bloque breve.", "Define como registrar el resultado sin retener audio."], "Una sesion musical concreta con metrica de practica."),
     "visual-prompt-agent" => ("visuales", "Agente de Prompts Visuales", "Separa intencion, composicion e iluminacion; elimina datos sensibles antes de proponer un prompt externo.", ["Aclara intencion, publico y restricciones.", "Describe componentes visuales sin copiar material protegido.", "Prepara un prompt con variaciones y criterio de revision."], "Un prompt visual revisable con alternativas."),
     "code-prompt-agent" => ("codigo", "Agente de Prompts de Codigo", "Aclara comportamiento, riesgos y pruebas antes de escribir un prompt. No ejecutes codigo ni solicites secretos.", ["Extrae criterios de aceptacion y alcance.", "Identifica supuestos, riesgos y pruebas sin ejecutar codigo.", "Redacta un prompt tecnico verificable."], "Un plan tecnico acotado con pruebas propuestas y sin secretos."),
     "legal-analysis-agent" => ("legal", "Agente de Analisis Legal", "Distingue clausulas, hechos, riesgos e incertidumbres. No presentes una conclusion como dictamen legal.", ["Identifica documento, empresa, fecha y jurisdiccion declarada.", "Extrae datos, usos, terceros, retencion y clausulas relevantes.", "Separa alertas y preguntas antes de decidir si conviene aceptar."], "Un analisis explicable de compromisos y riesgos con preguntas concretas."),
-    "math-tutor-agent" => ("matematicas", "Profesor de Matematicas", "Resuelve paso a paso, declara supuestos y comprueba operaciones.", ["Identifica datos, incognita, nivel y metodo.", "Desarrolla el procedimiento y comprueba el resultado.", "Cierra con un ejercicio graduado y una pista."], "Una explicacion verificable, un procedimiento claro y practica."),
-    "physics-tutor-agent" => ("fisica", "Profesor de Fisica", "Explica el fenomeno, usa unidades del SI y comprueba dimensiones.", ["Identifica sistema, datos, unidades y principio fisico.", "Plantea ecuaciones y comprueba dimensiones.", "Cierra con una variacion del problema para practicar."], "Un modelo fisico explicado, una solucion con unidades y una comprobacion."),
-    "specialized-professors-coordinator-agent" => ("profesores", "Coordinador de profesores especializados", "Identifica la materia y propone el profesor y modelo local adecuados.", ["Precisa materia, nivel y resultado.", "Elige un profesor y un modelo local disponible.", "Comienza con una practica y define como comprobar el avance."], "Un profesor local elegido y una primera tarea accionable."),
+    "math-tutor-agent" => ("multi-profesor", "Profesor de Matematicas", "Resuelve paso a paso, declara supuestos y comprueba operaciones.", ["Identifica datos, incognita, nivel y metodo.", "Desarrolla el procedimiento y comprueba el resultado.", "Cierra con un ejercicio graduado y una pista."], "Una explicacion verificable, un procedimiento claro y practica."),
+    "physics-tutor-agent" => ("multi-profesor", "Profesor de Fisica", "Explica el fenomeno, usa unidades del SI y comprueba dimensiones.", ["Identifica sistema, datos, unidades y principio fisico.", "Plantea ecuaciones y comprueba dimensiones.", "Cierra con una variacion del problema para practicar."], "Un modelo fisico explicado, una solucion con unidades y una comprobacion."),
+    "specialized-professors-coordinator-agent" => ("multi-profesor", "Coordinador de profesores especializados", "Identifica la materia y propone el profesor y modelo local adecuados.", ["Precisa materia, nivel y resultado.", "Elige un profesor y un modelo local disponible.", "Comienza con una practica y define como comprobar el avance."], "Un profesor local elegido y una primera tarea accionable."),
     _ => return Err("El agente seleccionado no esta registrado.".into()),
   };
   if assigned_tool != tool_id { return Err("Ese agente no esta asignado a la herramienta seleccionada.".into()); }
@@ -560,7 +571,7 @@ fn validate_note_path(path: &str) -> Result<String, String> {
 #[tauri::command]
 fn get_obsidian_status(state: State<'_, Mutex<AuthState>>) -> Result<ObsidianStatus, String> {
   let mut auth = state.lock().map_err(|_| "No se pudo acceder a la sesion local.")?;
-  require_active_session(&mut auth)?;
+  require_administrator(&mut auth)?;
   Ok(obsidian_status())
 }
 
@@ -568,7 +579,7 @@ fn get_obsidian_status(state: State<'_, Mutex<AuthState>>) -> Result<ObsidianSta
 fn configure_obsidian(api_key: String, state: State<'_, Mutex<AuthState>>) -> Result<ObsidianStatus, String> {
   {
     let mut auth = state.lock().map_err(|_| "No se pudo acceder a la sesion local.")?;
-    require_active_session(&mut auth)?;
+    require_administrator(&mut auth)?;
   }
   if api_key.trim().len() < 16 { return Err("La clave de la API de Obsidian no parece valida.".into()); }
   let entry = obsidian_entry()?;
@@ -580,7 +591,7 @@ fn configure_obsidian(api_key: String, state: State<'_, Mutex<AuthState>>) -> Re
 async fn test_obsidian_connection(state: State<'_, Mutex<AuthState>>) -> Result<ObsidianStatus, String> {
   {
     let mut auth = state.lock().map_err(|_| "No se pudo acceder a la sesion local.")?;
-    require_active_session(&mut auth)?;
+    require_administrator(&mut auth)?;
   }
   let api_key = obsidian_entry()?.get_password().map_err(|_| "Configura primero la API local de Obsidian.")?;
   let client = reqwest::Client::builder().danger_accept_invalid_certs(true).build().map_err(|_| "No se pudo crear la conexion local con Obsidian.")?;
@@ -593,7 +604,7 @@ async fn test_obsidian_connection(state: State<'_, Mutex<AuthState>>) -> Result<
 async fn save_to_obsidian(note_path: String, markdown: String, state: State<'_, Mutex<AuthState>>) -> Result<(), String> {
   {
     let mut auth = state.lock().map_err(|_| "No se pudo acceder a la sesion local.")?;
-    require_active_session(&mut auth)?;
+    require_administrator(&mut auth)?;
   }
   let path = validate_note_path(&note_path)?;
   let api_key = obsidian_entry()?.get_password().map_err(|_| "Configura primero la API local de Obsidian.")?;
@@ -616,7 +627,7 @@ fn format_summary_for_heading(markdown: &str, base_level: u8) -> Result<String, 
 async fn append_to_obsidian(note_path: String, markdown: String, heading_level: u8, state: State<'_, Mutex<AuthState>>) -> Result<(), String> {
   {
     let mut auth = state.lock().map_err(|_| "No se pudo acceder a la sesion local.")?;
-    require_active_session(&mut auth)?;
+    require_administrator(&mut auth)?;
   }
   let path = validate_note_path(&note_path)?;
   let formatted = format_summary_for_heading(&markdown, heading_level)?;
@@ -794,6 +805,14 @@ fn auth_status(state: State<'_, Mutex<AuthState>>) -> Result<AuthStatus, String>
 }
 
 #[tauri::command]
+fn auth_guest(state: State<'_, Mutex<AuthState>>) -> Result<AuthStatus, String> {
+  let mut state = state.lock().map_err(|_| "No se pudo acceder a la sesión local.")?;
+  if state.session.as_ref().is_some_and(|session| session.access == "administrator") { return Ok(status(&mut state)); }
+  let current = now();
+  state.session = Some(Session { last_activity_at: current, expires_at: current + GUEST_TTL_MS, paused: false, access: "guest".into() });
+  Ok(status(&mut state))
+}
+#[tauri::command]
 fn auth_configure(access_code: String, state: State<'_, Mutex<AuthState>>) -> Result<AuthStatus, String> {
   if access_code.chars().count() < 8 { return Err("El codigo debe tener al menos 8 caracteres.".into()); }
   let mut state = state.lock().map_err(|_| "No se pudo acceder a la sesion local.")?;
@@ -801,7 +820,7 @@ fn auth_configure(access_code: String, state: State<'_, Mutex<AuthState>>) -> Re
   state.access_code_hash = Some(hash(access_code, DEFAULT_COST).map_err(|_| "No se pudo proteger el codigo de acceso.")?);
   save_config(&state)?;
   let current = now();
-  state.session = Some(Session { last_activity_at: current, expires_at: current + SESSION_TTL_MS, paused: false });
+  state.session = Some(Session { last_activity_at: current, expires_at: u128::MAX, paused: false, access: "administrator".into() });
   Ok(status(&mut state))
 }
 
@@ -819,7 +838,7 @@ fn auth_login(access_code: String, state: State<'_, Mutex<AuthState>>) -> Result
   }
   state.failures = 0;
   state.locked_until = None;
-  state.session = Some(Session { last_activity_at: current, expires_at: current + SESSION_TTL_MS, paused: false });
+  state.session = Some(Session { last_activity_at: current, expires_at: u128::MAX, paused: false, access: "administrator".into() });
   Ok(status(&mut state))
 }
 
@@ -864,7 +883,7 @@ fn main() {
       app.manage(Mutex::new(AuthState { access_code_hash: config.access_code_hash, session: None, failures: 0, locked_until: None, config_path }));
       Ok(())
     })
-    .invoke_handler(tauri::generate_handler![auth_status, auth_configure, auth_login, auth_pause, auth_resume, auth_activity, auth_logout, summarize_text, get_obsidian_status, configure_obsidian, test_obsidian_connection, save_to_obsidian, append_to_obsidian, get_obs_status, prepare_class_plan, launch_obs_studio, get_local_ai_status, analyze_source, analyze_legal_text, generate_agent_plan])
+    .invoke_handler(tauri::generate_handler![auth_status, auth_guest, auth_configure, auth_login, auth_pause, auth_resume, auth_activity, auth_logout, summarize_text, get_obsidian_status, configure_obsidian, test_obsidian_connection, save_to_obsidian, append_to_obsidian, get_obs_status, prepare_class_plan, launch_obs_studio, get_local_ai_status, analyze_source, analyze_legal_text, generate_agent_plan])
     .run(tauri::generate_context!())
     .expect("error al ejecutar Herramientas");
 }

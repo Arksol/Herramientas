@@ -1,7 +1,11 @@
 export type SessionState = "active" | "paused" | "inactive" | "blocked" | "signed_out";
+export type AccessMode = "guest" | "administrator" | "none";
 
 export type Session = {
   authenticated: boolean;
+  access?: AccessMode;
+  canPersist?: boolean;
+  canCreateTools?: boolean;
   configured?: boolean;
   state: SessionState;
   expiresAt?: string | number;
@@ -26,6 +30,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export const sessionApi = {
   get: () => isTauri() ? native<Session>("auth_status") : request<Session>("/api/auth/session"),
+  guest: () => isTauri() ? native<Session>("auth_guest") : request<Session>("/api/auth/guest", { method: "POST" }),
   configure: (accessCode: string) => isTauri() ? native<Session>("auth_configure", { accessCode }) : request<Session>("/api/auth/configure", { method: "POST", body: JSON.stringify({ accessCode }) }),
   login: (accessCode: string) => isTauri() ? native<Session>("auth_login", { accessCode }) : request<Session>("/api/auth/login", { method: "POST", body: JSON.stringify({ accessCode }) }),
   pause: () => isTauri() ? native<Session>("auth_pause") : request<Session>("/api/auth/pause", { method: "POST" }),

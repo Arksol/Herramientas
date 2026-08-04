@@ -21,7 +21,8 @@ const obsidianConfigPath = path.join(directory, "..", ".obsidian.local.json");
 let accessCodeHash = await loadAccessCodeHash();
 const app = express();
 
-const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+const GUEST_TTL_MS = 60 * 60 * 1000;
+const ADMIN_COOKIE_TTL_MS = 400 * 24 * 60 * 60 * 1000;
 const IDLE_TTL_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 3;
 const LOCKOUT_MS = 15 * 60 * 1000;
@@ -35,7 +36,7 @@ const latestContexts = new Map();
 const classPlans = new Map();
 const recentAuditEvents = [];
 const CONTEXT_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
-const TOOL_IDS = ["resumidor", "clases", "ingles", "tecnologia", "musica", "visuales", "codigo", "legal", "matematicas", "fisica", "profesores"];
+const TOOL_IDS = ["resumidor", "clases", "multi-profesor", "visuales", "codigo", "legal"];
 const CLASS_PLATFORMS = ["Class (UVM)", "Blackboard UVM", "EBAC", "Mastermind", "Platzi", "Coursera", "YouTube", "Finanzas - Academia Eduardo Rosas", "Otra plataforma autorizada"];
 const LOCAL_MODEL_CATALOG = [
   { id: "qwen2.5:3b-instruct", name: "Qwen 2.5 3B Instruct", size: "1.9 GB", purpose: "Profesor general, español, resúmenes y práctica", recommendedFor: ["ingles", "tecnologia", "musica", "matematicas", "fisica", "profesores"], command: "ollama pull qwen2.5:3b-instruct", licenseNote: "Revisa la licencia Qwen del modelo 3B antes de redistribuirlo." },
@@ -46,29 +47,24 @@ const LOCAL_MODEL_CATALOG = [
 const TOOL_POLICIES = Object.freeze({
   resumidor: { requiresActiveSession: true, actions: ["plan", "analyze", "summarize", "obsidian-save", "obsidian-append"], sourceKinds: ["text", "link", "file", "image", "video"] },
   clases: { requiresActiveSession: true, actions: ["plan", "plan-resource", "open-obs", "analyze", "summarize"], sourceKinds: ["text", "link", "file", "video"] },
-  ingles: { requiresActiveSession: false, actions: ["plan", "practice"], sourceKinds: ["text", "link", "file"] },
-  tecnologia: { requiresActiveSession: false, actions: ["plan", "explain", "practice"], sourceKinds: ["text", "link", "file"] },
-  musica: { requiresActiveSession: false, actions: ["plan", "practice"], sourceKinds: ["text", "link", "file", "audio"] },
-  visuales: { requiresActiveSession: false, actions: ["plan", "analyze-reference", "create-prompt"], sourceKinds: ["text", "image", "video", "file"] },
-  codigo: { requiresActiveSession: false, actions: ["plan", "analyze-code", "create-prompt"], sourceKinds: ["text", "file"] },
-  legal: { requiresActiveSession: false, actions: ["plan", "analyze-agreement"], sourceKinds: ["text", "link", "file"] },
-  matematicas: { requiresActiveSession: false, actions: ["plan", "explain", "practice", "solve"], sourceKinds: ["text", "file", "image", "link"] },
-  fisica: { requiresActiveSession: false, actions: ["plan", "explain", "practice", "solve"], sourceKinds: ["text", "file", "image", "link"] },
-  profesores: { requiresActiveSession: false, actions: ["plan", "explain", "practice"], sourceKinds: ["text", "file", "image", "link"] }
+  "multi-profesor": { requiresActiveSession: true, actions: ["plan", "explain", "practice", "solve"], sourceKinds: ["text", "link", "file", "image", "audio"] },
+  visuales: { requiresActiveSession: true, actions: ["plan", "analyze-reference", "create-prompt"], sourceKinds: ["text", "image", "video", "file"] },
+  codigo: { requiresActiveSession: true, actions: ["plan", "analyze-code", "create-prompt"], sourceKinds: ["text", "file"] },
+  legal: { requiresActiveSession: true, actions: ["plan", "analyze-agreement"], sourceKinds: ["text", "link", "file"] }
 });
 
 const AGENT_RULES = Object.freeze({
   "academic-synthesis-agent": { toolId: "resumidor", name: "Agente de Síntesis Académica", instruction: "Distingue hechos, conceptos y dudas. Organiza una nota revisable sin inventar datos.", actions: ["Delimita la fuente autorizada y el resultado de aprendizaje.", "Extrae conceptos, relaciones y dudas verificables.", "Prepara una nota y preguntas de repaso antes de guardar."], outcome: "Una nota revisable con ideas clave y una acción de repaso." },
   "authorized-resources-agent": { toolId: "clases", name: "Agente de Recursos Autorizados", instruction: "Elige una ruta oficial o de estudio contextual permitida; nunca propongas evadir controles.", actions: ["Comprueba que el recurso sea autorizado.", "Elige una transcripción, selección o archivo propio como fuente.", "Prepara el resumen sin automatizar descargas ni la grabación."], outcome: "Un flujo permitido y una fuente clara para estudiar." },
-  "english-c1-tutor-agent": { toolId: "ingles", name: "Agente Tutor C1", instruction: "Ajusta la dificultad, exige producción activa y explica los errores con ejemplos breves.", actions: ["Define habilidad, contexto y evidencia de mejora.", "Crea una práctica breve de comprensión y producción.", "Cierra con corrección y repetición espaciada."], outcome: "Una práctica C1 con una respuesta activa y un criterio de mejora." },
-  "technical-tutor-agent": { toolId: "tecnologia", name: "Agente Tutor Técnico", instruction: "Alterna explicación, práctica y comprobación; no ejecutes código ni modifiques archivos.", actions: ["Define el concepto y el resultado observable.", "Diseña un ejercicio pequeño y seguro.", "Relaciona el resultado con un proyecto o la siguiente práctica."], outcome: "Una ruta de aprendizaje corta con ejercicio y verificación." },
-  "music-tutor-agent": { toolId: "musica", name: "Agente Tutor de Música", instruction: "Propón práctica deliberada con una habilidad, una métrica y una reflexión breve.", actions: ["Elige una habilidad musical y nivel de dificultad.", "Diseña técnica, escucha o composición en un bloque breve.", "Define cómo registrar el resultado sin retener audio."], outcome: "Una sesión musical concreta con métrica de práctica." },
+  "english-c1-tutor-agent": { toolId: "multi-profesor", name: "Agente Tutor C1", instruction: "Ajusta la dificultad, exige producción activa y explica los errores con ejemplos breves.", actions: ["Define habilidad, contexto y evidencia de mejora.", "Crea una práctica breve de comprensión y producción.", "Cierra con corrección y repetición espaciada."], outcome: "Una práctica C1 con una respuesta activa y un criterio de mejora." },
+  "technical-tutor-agent": { toolId: "multi-profesor", name: "Agente Tutor Técnico", instruction: "Alterna explicación, práctica y comprobación; no ejecutes código ni modifiques archivos.", actions: ["Define el concepto y el resultado observable.", "Diseña un ejercicio pequeño y seguro.", "Relaciona el resultado con un proyecto o la siguiente práctica."], outcome: "Una ruta de aprendizaje corta con ejercicio y verificación." },
+  "music-tutor-agent": { toolId: "multi-profesor", name: "Agente Tutor de Música", instruction: "Propón práctica deliberada con una habilidad, una métrica y una reflexión breve.", actions: ["Elige una habilidad musical y nivel de dificultad.", "Diseña técnica, escucha o composición en un bloque breve.", "Define cómo registrar el resultado sin retener audio."], outcome: "Una sesión musical concreta con métrica de práctica." },
   "visual-prompt-agent": { toolId: "visuales", name: "Agente de Prompts Visuales", instruction: "Separa intención, composición e iluminación; elimina datos sensibles antes de proponer un prompt externo.", actions: ["Aclara intención, público y restricciones.", "Describe componentes visuales sin copiar material protegido.", "Prepara un prompt con variaciones y criterio de revisión."], outcome: "Un prompt visual revisable con alternativas." },
   "code-prompt-agent": { toolId: "codigo", name: "Agente de Prompts de Código", instruction: "Aclara comportamiento, riesgos y pruebas antes de escribir un prompt. No ejecutes código ni solicites secretos.", actions: ["Extrae criterios de aceptación y alcance.", "Identifica supuestos, riesgos y pruebas sin ejecutar código.", "Redacta un prompt técnico verificable."], outcome: "Un plan técnico acotado con pruebas propuestas y sin secretos." },
   "legal-analysis-agent": { toolId: "legal", name: "Agente de Análisis Legal", instruction: "Distingue cláusulas, hechos, riesgos e incertidumbres. No presentes una conclusión como dictamen legal.", actions: ["Identifica documento, empresa, fecha y jurisdicción declarada.", "Extrae datos, usos, terceros, retención y cláusulas relevantes.", "Separa alertas y preguntas antes de decidir si conviene aceptar."], outcome: "Un análisis explicable de compromisos y riesgos con preguntas concretas." },
-  "math-tutor-agent": { toolId: "matematicas", name: "Profesor de Matemáticas", instruction: "Resuelve paso a paso, declara supuestos, comprueba operaciones y deja un ejercicio similar.", actions: ["Identifica datos, incógnita, nivel y método.", "Desarrolla el procedimiento y comprueba el resultado.", "Cierra con un ejercicio graduado y una pista."], outcome: "Una explicación verificable, un procedimiento claro y práctica para consolidar el tema." },
-  "physics-tutor-agent": { toolId: "fisica", name: "Profesor de Física", instruction: "Explica el fenómeno, declara supuestos, usa unidades del SI y comprueba dimensiones.", actions: ["Identifica sistema, datos, unidades y principio físico.", "Plantea ecuaciones y comprueba dimensiones y sentido físico.", "Cierra con una variación del problema para practicar."], outcome: "Un modelo físico explicado, una solución con unidades y una comprobación de consistencia." },
-  "specialized-professors-coordinator-agent": { toolId: "profesores", name: "Coordinador de profesores especializados", instruction: "Identifica la materia y propone el profesor y modelo local adecuados.", actions: ["Precisa materia, nivel y resultado de aprendizaje.", "Elige un profesor y un modelo local disponible.", "Comienza con una práctica y define cómo comprobar el avance."], outcome: "Un profesor local elegido conscientemente y una primera tarea accionable." }});
+  "math-tutor-agent": { toolId: "multi-profesor", name: "Profesor de Matemáticas", instruction: "Resuelve paso a paso, declara supuestos, comprueba operaciones y deja un ejercicio similar.", actions: ["Identifica datos, incógnita, nivel y método.", "Desarrolla el procedimiento y comprueba el resultado.", "Cierra con un ejercicio graduado y una pista."], outcome: "Una explicación verificable, un procedimiento claro y práctica para consolidar el tema." },
+  "physics-tutor-agent": { toolId: "multi-profesor", name: "Profesor de Física", instruction: "Explica el fenómeno, declara supuestos, usa unidades del SI y comprueba dimensiones.", actions: ["Identifica sistema, datos, unidades y principio físico.", "Plantea ecuaciones y comprueba dimensiones y sentido físico.", "Cierra con una variación del problema para practicar."], outcome: "Un modelo físico explicado, una solución con unidades y una comprobación de consistencia." },
+  "specialized-professors-coordinator-agent": { toolId: "multi-profesor", name: "Coordinador de profesores especializados", instruction: "Identifica la materia y propone el profesor y modelo local adecuados.", actions: ["Precisa materia, nivel y resultado de aprendizaje.", "Elige un profesor y un modelo local disponible.", "Comienza con una práctica y define cómo comprobar el avance."], outcome: "Un profesor local elegido conscientemente y una primera tarea accionable." }});
 const AGENT_IDS = Object.keys(AGENT_RULES);
 const CLASS_PLATFORM_RULES = Object.freeze({
   "Class (UVM)": ["uvm.class.com"],
@@ -197,31 +193,27 @@ function getSession(req) {
   const token = req.cookies?.[COOKIE_NAME];
   const session = token ? sessions.get(token) : undefined;
   if (!session) return null;
-  if (Date.now() >= session.expiresAt) {
-    sessions.delete(token);
-    return null;
-  }
+  if (Number.isFinite(session.expiresAt) && Date.now() >= session.expiresAt) { sessions.delete(token); return null; }
   return { token, session };
 }
-
 function sessionState(session) {
   const inactive = Date.now() - session.lastActivityAt >= IDLE_TTL_MS;
   return session.paused ? "paused" : inactive ? "inactive" : "active";
 }
-
 function sessionResponse(session) {
-  return {
-    authenticated: true,
-    state: sessionState(session),
-    expiresAt: new Date(session.expiresAt).toISOString(),
-    lastActivityAt: new Date(session.lastActivityAt).toISOString(),
-    tools: ["resumidor", "clases"]
-  };
+  const administrator = session.access === "administrator";
+  return { authenticated: administrator, access: session.access, canPersist: administrator, canCreateTools: administrator, configured: Boolean(accessCodeHash), state: sessionState(session), expiresAt: Number.isFinite(session.expiresAt) ? new Date(session.expiresAt).toISOString() : null, lastActivityAt: new Date(session.lastActivityAt).toISOString(), tools: TOOL_IDS };
 }
 
 function requireSession(req, res, next) {
   const found = getSession(req);
-  if (!found) return error(res, 401, "UNAUTHENTICATED", "Se requiere acceso autorizado.");
+  if (!found) return error(res, 401, "SESSION_REQUIRED", "Inicia una sesión temporal o de administrador.");
+  req.localSession = found;
+  next();
+}
+function requireAdministrator(req, res, next) {
+  const found = getSession(req);
+  if (!found || found.session.access !== "administrator") return error(res, 403, "ADMIN_REQUIRED", "Esta acción solo está disponible para el administrador local.");
   req.localSession = found;
   next();
 }
@@ -634,11 +626,11 @@ app.post("/api/context/cleanup", requireActiveSession, (_req, res) => {
   latestContexts.clear();
   res.status(204).end();
 });
-app.get("/api/obsidian/status", requireActiveSession, async (_req, res) => {
+app.get("/api/obsidian/status", requireAdministrator, async (_req, res) => {
   res.json(obsidianStatus(await loadObsidianApiKey()));
 });
 
-app.post("/api/obsidian/configure", requireActiveSession, async (req, res) => {
+app.post("/api/obsidian/configure", requireAdministrator, async (req, res) => {
   const parsed = z.object({ apiKey: z.string().min(16).max(512) }).safeParse(req.body);
   if (!parsed.success) return error(res, 400, "INVALID_OBSIDIAN_KEY", "La clave de la API de Obsidian no parece válida.");
   const apiKey = parsed.data.apiKey.trim();
@@ -655,7 +647,7 @@ app.post("/api/obsidian/configure", requireActiveSession, async (req, res) => {
   }
 });
 
-app.post("/api/obsidian/test", requireActiveSession, async (_req, res) => {
+app.post("/api/obsidian/test", requireAdministrator, async (_req, res) => {
   const apiKey = await loadObsidianApiKey();
   if (!apiKey) return error(res, 400, "OBSIDIAN_NOT_CONFIGURED", "Configura primero la API local de Obsidian.");
   try {
@@ -668,7 +660,7 @@ app.post("/api/obsidian/test", requireActiveSession, async (_req, res) => {
   }
 });
 
-app.post("/api/obsidian/save", requireActiveSession, async (req, res) => {
+app.post("/api/obsidian/save", requireAdministrator, async (req, res) => {
   const parsed = z.object({ notePath: z.string().max(500), markdown: z.string().max(250000) }).safeParse(req.body);
   if (!parsed.success) return error(res, 400, "INVALID_OBSIDIAN_SAVE", "La nota enviada no es valida.");
   const apiKey = await loadObsidianApiKey();
@@ -683,7 +675,7 @@ app.post("/api/obsidian/save", requireActiveSession, async (req, res) => {
   }
 });
 
-app.post("/api/obsidian/append", requireActiveSession, async (req, res) => {
+app.post("/api/obsidian/append", requireAdministrator, async (req, res) => {
   const parsed = z.object({ notePath: z.string().max(500), markdown: z.string().max(250000), headingLevel: z.number().int().min(1).max(4) }).safeParse(req.body);
   if (!parsed.success) return error(res, 400, "INVALID_OBSIDIAN_APPEND", "La nota enviada no es valida.");
   const apiKey = await loadObsidianApiKey();
@@ -749,9 +741,9 @@ app.post("/api/auth/configure", async (req, res) => {
   await saveAccessCodeHash(accessCodeHash);
   const token = crypto.randomUUID();
   const now = Date.now();
-  const session = { createdAt: now, lastActivityAt: now, expiresAt: now + SESSION_TTL_MS, paused: false };
+  const session = { createdAt: now, lastActivityAt: now, expiresAt: Infinity, paused: false, access: "administrator" };
   sessions.set(token, session);
-  res.cookie(COOKIE_NAME, token, { httpOnly: true, sameSite: "strict", secure: false, maxAge: SESSION_TTL_MS, path: "/" });
+  res.cookie(COOKIE_NAME, token, { httpOnly: true, sameSite: "strict", secure: false, maxAge: ADMIN_COOKIE_TTL_MS, path: "/" });
   res.json({ ...sessionResponse(session), configured: true });
 });
 
@@ -771,16 +763,26 @@ app.post("/api/auth/login", async (req, res) => {
   }
   attempts.delete(key);
   const token = crypto.randomUUID();
-  const session = { createdAt: now, lastActivityAt: now, expiresAt: now + SESSION_TTL_MS, paused: false };
+  const session = { createdAt: now, lastActivityAt: now, expiresAt: Infinity, paused: false, access: "administrator" };
   sessions.set(token, session);
-  res.cookie(COOKIE_NAME, token, { httpOnly: true, sameSite: "strict", secure: false, maxAge: SESSION_TTL_MS, path: "/" });
+  res.cookie(COOKIE_NAME, token, { httpOnly: true, sameSite: "strict", secure: false, maxAge: ADMIN_COOKIE_TTL_MS, path: "/" });
   res.json(sessionResponse(session));
 });
 
 app.get("/api/auth/session", (req, res) => {
   const found = getSession(req);
-  if (!found) return res.json({ authenticated: false, configured: Boolean(accessCodeHash), state: "signed_out" });
+  if (!found) return res.json({ authenticated: false, access: "none", canPersist: false, canCreateTools: false, configured: Boolean(accessCodeHash), state: "signed_out" });
   res.json(sessionResponse(found.session));
+});
+
+app.post("/api/auth/guest", (req, res) => {
+  const existing = getSession(req);
+  if (existing?.session.access === "administrator") return res.json(sessionResponse(existing.session));
+  const now = Date.now(); const token = crypto.randomUUID();
+  const session = { createdAt: now, lastActivityAt: now, expiresAt: now + GUEST_TTL_MS, paused: false, access: "guest" };
+  sessions.set(token, session);
+  res.cookie(COOKIE_NAME, token, { httpOnly: true, sameSite: "strict", secure: false, maxAge: GUEST_TTL_MS, path: "/" });
+  res.json(sessionResponse(session));
 });
 
 app.post("/api/auth/pause", requireActiveSession, (req, res) => {

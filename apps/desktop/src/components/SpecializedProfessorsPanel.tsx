@@ -11,8 +11,7 @@ const priorityLabels: Record<TaskPriority, string> = { hoy: "Hoy", "esta-semana"
 type Props = { tool: Tool; disabled: boolean; onActivity: () => Promise<void> | void };
 
 export default function SpecializedProfessorsPanel({ tool, disabled, onActivity }: Props) {
-  const standalone = tool.id === "matematicas" || tool.id === "fisica";
-  const options = useMemo(() => standalone ? professorOptions.filter((professor) => professor.toolId === tool.id) : professorOptions, [standalone, tool.id]);
+  const options = useMemo(() => professorOptions, []);
   const [selectedAgentId, setSelectedAgentId] = useState(options[0]?.id ?? "");
   const [modelId, setModelId] = useState(localModelCatalog[0].id);
   const [priority, setPriority] = useState<TaskPriority>("hoy");
@@ -23,7 +22,7 @@ export default function SpecializedProfessorsPanel({ tool, disabled, onActivity 
   const [busy, setBusy] = useState(false);
 
   const selectedProfessor = options.find((professor) => professor.id === selectedAgentId) ?? options[0];
-  const modelOptions = selectedProfessor ? modelsForProfessor(selectedProfessor.toolId) : localModelCatalog;
+  const modelOptions = selectedProfessor ? modelsForProfessor(selectedProfessor.subject) : localModelCatalog;
   const installedModels = status?.models ?? [];
   const isInstalled = (id: string) => installedModels.some((installed) => installed === id);
 
@@ -36,19 +35,19 @@ export default function SpecializedProfessorsPanel({ tool, disabled, onActivity 
   useEffect(() => {
     const nextProfessor = options[0];
     setSelectedAgentId(nextProfessor?.id ?? "");
-    setModelId(nextProfessor ? (modelsForProfessor(nextProfessor.toolId).find((model) => isInstalled(model.id))?.id ?? modelsForProfessor(nextProfessor.toolId)[0]?.id ?? "") : "");
+    setModelId(nextProfessor ? (modelsForProfessor(nextProfessor.subject).find((model) => isInstalled(model.id))?.id ?? modelsForProfessor(nextProfessor.subject)[0]?.id ?? "") : "");
     setPlan(null);
   }, [options, status]);
 
   useEffect(() => {
     if (!selectedProfessor) return;
-    const compatible = modelsForProfessor(selectedProfessor.toolId);
+    const compatible = modelsForProfessor(selectedProfessor.subject);
     if (!compatible.some((model) => model.id === modelId)) setModelId(compatible[0]?.id ?? "");
   }, [modelId, selectedProfessor]);
 
   const chooseProfessor = (professor: ProfessorOption) => {
     setSelectedAgentId(professor.id);
-    const compatible = modelsForProfessor(professor.toolId);
+    const compatible = modelsForProfessor(professor.subject);
     setModelId(compatible.find((model) => isInstalled(model.id))?.id ?? compatible[0]?.id ?? "");
     setPlan(null);
   };
@@ -60,7 +59,7 @@ export default function SpecializedProfessorsPanel({ tool, disabled, onActivity 
       await onActivity();
       const profile = readPersonalAgentSettings().localProfile;
       const nextPlan = await generateAgentPlan({
-        toolId: selectedProfessor.toolId,
+        toolId: tool.id,
         agentId: selectedProfessor.id,
         task,
         priority,
@@ -75,8 +74,8 @@ export default function SpecializedProfessorsPanel({ tool, disabled, onActivity 
   };
 
   return <section className="professor-workspace" aria-label="Profesores especializados">
-    <div className="professor-workspace-heading"><div><span>Agentes de estudio local</span><h2>{standalone ? tool.name : "Elige tu profesor"}</h2></div><p>{status?.available ? "Ollama conectado" : "Ollama local"}</p></div>
-    {!standalone && <div className="professor-list" role="listbox" aria-label="Profesores disponibles">{options.map((professor) => <button type="button" key={professor.id} className={`professor-option ${professor.id === selectedAgentId ? "selected" : ""}`} onClick={() => chooseProfessor(professor)} disabled={disabled || busy} role="option" aria-selected={professor.id === selectedAgentId}><strong>{professor.name}</strong><span>{professor.specialties.join(" · ")}</span><small>{professor.role}</small></button>)}</div>}
+    <div className="professor-workspace-heading"><div><span>Agentes de estudio local</span><h2>Elige tu profesor</h2></div><p>{status?.available ? "Ollama conectado" : "Ollama local"}</p></div>
+    <div className="professor-list" role="listbox" aria-label="Profesores disponibles">{options.map((professor) => <button type="button" key={professor.id} className={`professor-option ${professor.id === selectedAgentId ? "selected" : ""}`} onClick={() => chooseProfessor(professor)} disabled={disabled || busy} role="option" aria-selected={professor.id === selectedAgentId}><strong>{professor.name}</strong><span>{professor.specialties.join(" · ")}</span><small>{professor.role}</small></button>)}</div>
     {selectedProfessor && <div className="professor-selection"><div><b>{selectedProfessor.name}</b><p>{selectedProfessor.role}</p></div><label>Modelo local<select value={modelId} onChange={(event) => setModelId(event.target.value)} disabled={disabled || busy}>{modelOptions.map((model) => <option key={model.id} value={model.id}>{model.name} · {isInstalled(model.id) ? "Disponible" : "No instalado"}</option>)}</select></label><p className="field-help">{modelOptions.find((model) => model.id === modelId)?.purpose}. El modelo se ejecuta en Ollama local y no se envía a Houston ni a otro servicio.</p></div>}
     <label className="professor-task-label">¿Qué quieres aprender o resolver?<textarea value={task} onChange={(event) => setTask(event.target.value)} placeholder="Ejemplo: explícame cómo resolver sistemas de ecuaciones y déjame un ejercicio similar." disabled={disabled || busy} /></label>
     <div className="professor-controls"><label>Prioridad<select value={priority} onChange={(event) => setPriority(event.target.value as TaskPriority)} disabled={disabled || busy}>{(Object.keys(priorityLabels) as TaskPriority[]).map((value) => <option key={value} value={value}>{priorityLabels[value]}</option>)}</select></label><button type="button" className="primary" onClick={startWorking} disabled={disabled || busy || !task.trim() || !selectedProfessor}>{busy ? "Trabajando..." : "Empezar con este profesor"}</button></div>

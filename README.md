@@ -100,3 +100,12 @@ La URL pública de Vercel sirve la interfaz web y la burbuja contextual, pero no
 - En Windows, los registros de Ollama suelen estar en `%LOCALAPPDATA%\Ollama`; no borres esa carpeta si quieres conservar los modelos.
 
 Consulta la [documentación oficial de la API local de Ollama](https://docs.ollama.com/api/introduction) y la [documentación oficial de Windows](https://docs.ollama.com/windows) para cambios del instalador o del servicio.
+
+## Accesos y Multi profesor
+
+La aplicación tiene dos modos locales:
+
+- **Invitado temporal:** puede usar todas las herramientas durante una sesión de una hora. Sus fuentes, planes y resultados no se guardan; tampoco puede crear herramientas ni configurar Obsidian.
+- **Administrador:** se abre con el código local ya configurado. No tiene límite de tiempo dentro de la aplicación y puede guardar su perfil, borradores de herramientas y notas de Obsidian de forma explícita.
+
+El catálogo docente se unificó en **Multi profesor**. Desde una sola herramienta se selecciona Inglés C1, Tecnología, Música, Matemáticas o Física, además del modelo local compatible de Ollama. Los modelos sugeridos se ejecutan localmente y se conservan los límites de privacidad del proyecto.
