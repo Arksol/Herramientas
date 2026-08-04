@@ -228,7 +228,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .legal-signals ul { margin: 8px 0 0; padding-left: 19px; }
 @media (max-width: 850px) { .legal-analysis-panel { grid-template-columns: 1fr; } }
 
-.context-bubble { position: fixed; right: 24px; bottom: 24px; z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.context-bubble { position: fixed; right: 24px; bottom: 24px; z-index: 9999; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
 .context-bubble-toggle { position: relative; width: 55px; height: 55px; border: 1px solid #8ab9ec; touch-action: none; border-radius: 50%; background: rgb(22 67 111 / 72%); backdrop-filter: blur(8px); color: #eff7ff; font-size: 18px; font-weight: 700; box-shadow: 0 14px 36px #000a; transition: transform .14s ease, background .14s ease; }
 .context-bubble-toggle:hover { transform: translateY(-2px); background: #23699e; }
 .context-bubble-toggle span { position: absolute; right: 7px; top: 7px; width: 9px; height: 9px; border: 2px solid #16436f; border-radius: 50%; background: #83e2ac; }

@@ -92,7 +92,7 @@ function App() {
   };
 
   if (activeTool) {
-    return <main className="app-shell"><Workspace tool={activeTool} mode={mode} session={session} onSession={setSession} onBack={() => setActiveTool(null)} onRequestAccess={() => setPendingTool(activeTool)} initialContext={contextPayload} /></main>;
+    return <main className="app-shell"><Workspace tool={activeTool} mode={mode} session={session} onSession={setSession} onBack={() => setActiveTool(null)} onRequestAccess={() => setPendingTool(activeTool)} initialContext={contextPayload} modeLabel={modeLabel} selectedText={selectedText} contextPaused={contextPaused} onToggleContextPause={() => setContextPaused((current) => !current)} onOpenTool={openTool} /></main>;
   }
 
   return <main className="app-shell">
@@ -120,7 +120,7 @@ function App() {
   </main>;
 }
 
-function Workspace({ tool, mode, session, onSession, onBack, onRequestAccess, initialContext }: { tool: Tool; mode: Mode; session: Session; onSession: (session: Session) => void; onBack: () => void; onRequestAccess: () => void; initialContext: ContextPayload | null }) {
+function Workspace({ tool, mode, session, onSession, onBack, onRequestAccess, initialContext, modeLabel, selectedText, contextPaused, onToggleContextPause, onOpenTool }: { tool: Tool; mode: Mode; session: Session; onSession: (session: Session) => void; onBack: () => void; onRequestAccess: () => void; initialContext: ContextPayload | null; modeLabel: string; selectedText: string; contextPaused: boolean; onToggleContextPause: () => void; onOpenTool: (tool: Tool) => void }) {
   const [error, setError] = useState("");
   const protectedReady = !tool.protected || session.authenticated;
   const paused = tool.protected === true && session.state === "paused";
@@ -143,7 +143,7 @@ function Workspace({ tool, mode, session, onSession, onBack, onRequestAccess, in
     <div className="workspace-intro"><span className="workspace-icon">{tool.icon}</span><div><p className="eyebrow">{tool.number} - espacio de trabajo</p><h1>{tool.name}</h1><p>{mode === "integrated" ? tool.description : tool.contextual}</p></div></div><ToolContractPanel tool={tool} /><AgentPanel tool={tool} />{["matematicas", "fisica", "profesores"].includes(tool.id) ? <SpecializedProfessorsPanel tool={tool} disabled={!protectedUsable} onActivity={recordActivity} /> : <SpecialistAgentTaskPanel tool={tool} disabled={!protectedUsable} onActivity={recordActivity} />}
     {tool.protected && !protectedReady && <div className="notice"><b>Acceso protegido.</b> Configura e inicia el servicio local para desbloquear esta herramienta. <button onClick={onRequestAccess}>Introducir código</button></div>}
     {tool.protected && protectedReady && <div className={`notice ${protectedUsable ? "success" : ""}`}><b>{statusText}.</b> {protectedUsable ? "Puedes procesar contenido local." : "El procesamiento está detenido hasta reanudar."} Vence el {session.expiresAt ? new Date(session.expiresAt).toLocaleString("es-MX") : ""}.</div>}
-    {tool.id === "resumidor" ? <SummarizerPanel disabled={!protectedUsable} onActivity={recordActivity} initialSource={initialContext?.requestedTool === "resumidor" ? initialContext.selectedText : ""} /> : tool.id === "clases" ? <ClassDownloadPanel disabled={!protectedUsable} onActivity={recordActivity} /> : tool.id === "legal" ? <LegalAnalysisPanel disabled={!protectedUsable} onActivity={recordActivity} initialSource={initialContext?.requestedTool === "legal" ? initialContext.selectedText : ""} /> : null}
+    {tool.id === "resumidor" ? <SummarizerPanel disabled={!protectedUsable} onActivity={recordActivity} initialSource={initialContext?.requestedTool === "resumidor" ? initialContext.selectedText : ""} /> : tool.id === "clases" ? <ClassDownloadPanel disabled={!protectedUsable} onActivity={recordActivity} /> : tool.id === "legal" ? <LegalAnalysisPanel disabled={!protectedUsable} onActivity={recordActivity} initialSource={initialContext?.requestedTool === "legal" ? initialContext.selectedText : ""} /> : null}<ContextBubble tools={tools} modeLabel={modeLabel} selectedText={selectedText} paused={contextPaused} onTogglePause={onToggleContextPause} onOpenTool={onOpenTool} />
   </section>;
 }
 

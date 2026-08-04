@@ -50,3 +50,53 @@ npm run verify
 Curso registrado: [Finanzas - Academia Eduardo Rosas](https://academia.eduardorosas.mx/courses/enrolled/882564).
 
 Consulta [Profesores especializados locales](docs/profesores-locales.md), [IA local multimodal](docs/ia-local-multimodal.md), [Análisis legal](docs/analisis-legal.md), [Seguridad](docs/seguridad.md) y [Extensión de navegador](docs/extension-navegador.md).
+## Instalar y conectar Ollama en Windows
+
+Esta configuración está pensada para el uso personal en tu laptop con NVIDIA GTX 1650 Ti Max-Q de 4 GB. Ollama se ejecuta localmente: la aplicación de escritorio y la versión web local consultan `http://127.0.0.1:11434` sin enviar el material a un proveedor externo por defecto.
+
+1. Instala Ollama desde la [página oficial para Windows](https://ollama.com/download/windows). La aplicación queda ejecutándose en segundo plano.
+2. Abre PowerShell y confirma la instalación:
+
+```powershell
+ollama --version
+Invoke-RestMethod http://127.0.0.1:11434/api/tags
+```
+
+3. Descarga los modelos ligeros recomendados:
+
+```powershell
+ollama pull qwen2.5:3b
+ollama pull deepseek-r1:1.5b
+ollama pull moondream
+```
+
+`qwen2.5:3b` es el modelo general para resúmenes, agentes y análisis legal; `deepseek-r1:1.5b` es una alternativa ligera para razonamiento matemático y físico; `moondream` se reserva para imágenes y fotogramas. Descarga solamente los modelos que vayas a usar.
+
+4. Inicia la aplicación local:
+
+```powershell
+npm install
+npm run dev
+```
+
+Abre `http://localhost:1420`. El servicio local se inicia en `http://127.0.0.1:3030` y consulta Ollama en `http://127.0.0.1:11434`. La aplicación de escritorio usa esos mismos servicios locales. Si el icono de Ollama no está activo, ejecuta `ollama serve` en otra consola y vuelve a comprobar `/api/tags`.
+
+Para cambiar el modelo de texto o el endpoint local antes de iniciar el servicio:
+
+```powershell
+$env:HERRAMIENTAS_TEXT_MODEL = "qwen2.5:3b"
+$env:HERRAMIENTAS_OLLAMA_ENDPOINT = "http://127.0.0.1:11434"
+npm --prefix apps/desktop run service
+```
+
+La URL pública de Vercel sirve la interfaz web y la burbuja contextual, pero no puede acceder directamente al Ollama instalado en tu equipo desde Internet. Para usar resúmenes y agentes con tus modelos locales, abre la versión local (http://localhost:1420) o la aplicación de escritorio. No publiques el puerto de Ollama.
+
+### Solución rápida de problemas con Ollama
+
+- `ollama --version` falla: reinicia la terminal después de instalar Ollama o abre la aplicación desde el menú Inicio.
+- `/api/tags` no responde: inicia Ollama o ejecuta `ollama serve`; revisa que el puerto `11434` no esté ocupado.
+- Un modelo aparece como no instalado: ejecuta exactamente su comando `ollama pull` y revisa `ollama list`.
+- La aplicación muestra “servicio local desconectado”: verifica que estén activos los puertos `1420`, `3030` y `11434`, y vuelve a cargar la aplicación.
+- En Windows, los registros de Ollama suelen estar en `%LOCALAPPDATA%\Ollama`; no borres esa carpeta si quieres conservar los modelos.
+
+Consulta la [documentación oficial de la API local de Ollama](https://docs.ollama.com/api/introduction) y la [documentación oficial de Windows](https://docs.ollama.com/windows) para cambios del instalador o del servicio.

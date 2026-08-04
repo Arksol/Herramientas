@@ -288,7 +288,9 @@ runtimeApi().runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 runtimeApi().storage.onChanged.addListener((changes, area) => {
-  if (area !== "local" || !changes[ENABLED_KEY]) return;
+  if (area !== "local") return;
+  if (changes[POSITION_KEY] && bubbleHost) void applySavedPosition(bubbleHost);
+  if (!changes[ENABLED_KEY]) return;
   if (changes[ENABLED_KEY].newValue === false) removeBubble();
   else ensureBubble();
 });

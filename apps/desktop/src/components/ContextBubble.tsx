@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { createPortal } from "react-dom";
 import type { Tool } from "../data/tools";
 
 const POSITION_KEY = "herramientasAppBubblePosition";
+const POSITION_CHANNEL = "herramientas-app-bubble-position";
 const BUBBLE_SIZE = 55;
 
 type Props = {
@@ -18,7 +20,8 @@ type Position = { left: number; top: number };
 function readPosition(): Position | null {
   try {
     const value = JSON.parse(window.localStorage.getItem(POSITION_KEY) ?? "null");
-    return Number.isFinite(value?.left) && Number.isFinite(value?.top) ? value : null;
+    if (!Number.isFinite(value?.left) || !Number.isFinite(value?.top)) return null;
+    return clampPosition({ left: value.left, top: value.top });
   } catch {
     return null;
   }
@@ -35,7 +38,35 @@ export default function ContextBubble({ tools, modeLabel, selectedText, paused, 
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState<Position | null>(() => readPosition());
   const dragRef = useRef<{ dx: number; dy: number; source: "toggle" | "handle"; moved: boolean; startX: number; startY: number } | null>(null);
+  const channelRef = useRef<BroadcastChannel | null>(null);
   const suppressToggleClick = useRef(false);
+
+  useEffect(() => {
+    const applyPosition = (value: unknown) => {
+      if (!value || typeof value !== "object") return;
+      const candidate = value as Partial<Position>;
+      if (!Number.isFinite(candidate.left) || !Number.isFinite(candidate.top)) return;
+      setPosition(clampPosition({ left: candidate.left as number, top: candidate.top as number }));
+    };
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== POSITION_KEY) return;
+      if (!event.newValue) { setPosition(null); return; }
+      try { applyPosition(JSON.parse(event.newValue)); } catch { /* Ignore malformed external state. */ }
+    };
+    const channel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(POSITION_CHANNEL) : null;
+    const onMessage = (event: MessageEvent) => {
+      if (event.data?.type === "position") applyPosition(event.data.position);
+    };
+    channel?.addEventListener("message", onMessage);
+    channelRef.current = channel;
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      channel?.removeEventListener("message", onMessage);
+      channel?.close();
+      channelRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     const onResize = () => setPosition((current) => current ? clampPosition(current) : current);
@@ -59,7 +90,10 @@ export default function ContextBubble({ tools, modeLabel, selectedText, paused, 
       dragRef.current = null;
       if (finished.source === "toggle" && finished.moved) suppressToggleClick.current = true;
       setPosition((current) => {
-        if (current && finished.moved) window.localStorage.setItem(POSITION_KEY, JSON.stringify(current));
+        if (current && finished.moved) {
+          window.localStorage.setItem(POSITION_KEY, JSON.stringify(current));
+          channelRef.current?.postMessage({ type: "position", position: current });
+        }
         return current;
       });
     };
@@ -82,7 +116,7 @@ export default function ContextBubble({ tools, modeLabel, selectedText, paused, 
 
   const style = position ? { left: position.left, top: position.top, right: "auto", bottom: "auto" } : undefined;
 
-  return <aside className={`context-bubble ${open ? "is-open" : ""}`} style={style} aria-label="Burbuja contextual de Herramientas">
+  const bubble = <aside className={"context-bubble " + (open ? "is-open" : "")} style={style} aria-label="Burbuja contextual de Herramientas">
     {open && <section className="context-bubble-panel">
       <header className="context-bubble-header">
         <div><strong>Herramientas</strong><span>{modeLabel}</span></div>
@@ -97,4 +131,5 @@ export default function ContextBubble({ tools, modeLabel, selectedText, paused, 
     </section>}
     <button type="button" className="context-bubble-toggle" onPointerDown={(event) => startDrag(event, "toggle")} onClick={() => { if (suppressToggleClick.current) { suppressToggleClick.current = false; return; } setOpen((current) => !current); }} aria-expanded={open} title="Abrir burbuja contextual">H<span aria-hidden="true" /></button>
   </aside>;
+  return createPortal(bubble, document.body);
 }
