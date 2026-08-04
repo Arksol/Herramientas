@@ -6,12 +6,24 @@ export type LocalAiProfile = {
   note: string;
 };
 
+export type LocalModelStatus = {
+  id: string;
+  name: string;
+  size: string;
+  purpose: string;
+  recommendedFor: string[];
+  command: string;
+  installed: boolean;
+  licenseNote: string;
+};
+
 export type LocalAiStatus = {
   available: boolean;
   endpoint: string;
   hardware: string;
   models: string[];
   profiles: LocalAiProfile[];
+  modelCatalog: LocalModelStatus[];
 };
 
 import { apiUrl, serviceError } from "./base";

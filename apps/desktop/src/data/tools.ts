@@ -1,4 +1,4 @@
-﻿import { specialistAgents, type SpecialistAgent } from "./agentProfiles";
+import { specialistAgents, type SpecialistAgent } from "./agentProfiles";
 import { toolContracts, type ToolContract, type ToolId } from "./toolContracts";
 
 export type { ToolId } from "./toolContracts";
@@ -14,5 +14,8 @@ export const tools: Tool[] = [
   { id: "musica", number: "05", icon: "MU", name: "Profesor de música", description: "Estudia teoría, instrumento, composición, oído y práctica musical con un plan adaptable.", contextual: "Convierte una referencia, partitura o selección en una práctica musical.", agent: specialistAgents.musica, contract: toolContracts.musica },
   { id: "visuales", number: "06", icon: "VI", name: "Arquitecto de prompts visuales", description: "Crea prompts para imágenes y vídeos a partir de referencias locales.", contextual: "Usa imágenes o vídeos seleccionados como referencia.", agent: specialistAgents.visuales, contract: toolContracts.visuales },
   { id: "codigo", number: "07", icon: "</>", name: "Arquitecto de prompts de código", description: "Transforma requisitos, contexto técnico y archivos en prompts precisos.", contextual: "Usa código o documentación seleccionados sin secretos.", agent: specialistAgents.codigo, contract: toolContracts.codigo },
-  { id: "legal", number: "08", icon: "LG", name: "Análisis legal", description: "Explica acuerdos, privacidad y riesgos para los datos con límites claros y una recomendación condicionada.", contextual: "Analiza el texto visible de un acuerdo que decidas compartir.", agent: specialistAgents.legal, contract: toolContracts.legal }
+  { id: "legal", number: "08", icon: "LG", name: "Análisis legal", description: "Explica acuerdos, privacidad y riesgos para los datos con límites claros y una recomendación condicionada.", contextual: "Analiza el texto visible de un acuerdo que decidas compartir.", agent: specialistAgents.legal, contract: toolContracts.legal },
+  { id: "matematicas", number: "09", icon: "MA", name: "Profesor de Matemáticas", description: "Resuelve problemas con procedimiento visible, comprobaciones y ejercicios graduados en local.", contextual: "Plantea un problema y trabaja paso a paso con el profesor de matemáticas.", agent: specialistAgents.matematicas, contract: toolContracts.matematicas },
+  { id: "fisica", number: "10", icon: "FI", name: "Profesor de Física", description: "Relaciona modelos, unidades y ecuaciones para entender y practicar física en local.", contextual: "Comparte un problema, datos o diagrama autorizado para analizarlo.", agent: specialistAgents.fisica, contract: toolContracts.fisica },
+  { id: "profesores", number: "11", icon: "PR", name: "Profesores especializados", description: "Elige un profesor, un modelo local disponible y empieza una sesión de estudio adaptada.", contextual: "Selecciona la especialidad y el modelo local que quieres usar.", agent: specialistAgents.profesores, contract: toolContracts.profesores }
 ];

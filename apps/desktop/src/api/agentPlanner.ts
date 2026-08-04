@@ -13,6 +13,7 @@ export type AgentPlanRequest = {
   task: string;
   priority: TaskPriority;
   useLocalAi: boolean;
+  modelId?: string;
   personalContext?: PersonalContext;
 };
 

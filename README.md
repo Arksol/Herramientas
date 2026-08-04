@@ -49,4 +49,4 @@ npm run verify
 
 Curso registrado: [Finanzas - Academia Eduardo Rosas](https://academia.eduardorosas.mx/courses/enrolled/882564).
 
-Consulta [IA local multimodal](docs/ia-local-multimodal.md), [Análisis legal](docs/analisis-legal.md), [Seguridad](docs/seguridad.md) y [Extensión de navegador](docs/extension-navegador.md).
+Consulta [Profesores especializados locales](docs/profesores-locales.md), [IA local multimodal](docs/ia-local-multimodal.md), [Análisis legal](docs/analisis-legal.md), [Seguridad](docs/seguridad.md) y [Extensión de navegador](docs/extension-navegador.md).

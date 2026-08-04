@@ -6,6 +6,7 @@ import LegalAnalysisPanel from "./components/LegalAnalysisPanel";
 import AgentSettingsPanel from "./components/AgentSettingsPanel";
 import ToolContractPanel from "./components/ToolContractPanel";
 import SpecialistAgentTaskPanel from "./components/SpecialistAgentTaskPanel";
+import SpecializedProfessorsPanel from "./components/SpecializedProfessorsPanel";
 import ContextBubble from "./components/ContextBubble";
 import { isLocalWebApp } from "./api/base";
 import { readPersonalAgentSettings } from "./api/agentSettings";
@@ -139,7 +140,7 @@ function Workspace({ tool, mode, session, onSession, onBack, onRequestAccess, in
 
   return <section className="workspace">
     <header className="workspace-header"><button onClick={onBack}>&lt;- Herramientas</button><span>{mode === "integrated" ? "Modo integrado" : "Modo contextual"}</span>{tool.protected && <button onClick={togglePause} disabled={!protectedReady}>{paused || inactive ? "Reanudar sesión" : "Pausar sesión"}</button>}</header>
-    <div className="workspace-intro"><span className="workspace-icon">{tool.icon}</span><div><p className="eyebrow">{tool.number} - espacio de trabajo</p><h1>{tool.name}</h1><p>{mode === "integrated" ? tool.description : tool.contextual}</p></div></div><ToolContractPanel tool={tool} /><AgentPanel tool={tool} /><SpecialistAgentTaskPanel tool={tool} disabled={!protectedUsable} onActivity={recordActivity} />
+    <div className="workspace-intro"><span className="workspace-icon">{tool.icon}</span><div><p className="eyebrow">{tool.number} - espacio de trabajo</p><h1>{tool.name}</h1><p>{mode === "integrated" ? tool.description : tool.contextual}</p></div></div><ToolContractPanel tool={tool} /><AgentPanel tool={tool} />{["matematicas", "fisica", "profesores"].includes(tool.id) ? <SpecializedProfessorsPanel tool={tool} disabled={!protectedUsable} onActivity={recordActivity} /> : <SpecialistAgentTaskPanel tool={tool} disabled={!protectedUsable} onActivity={recordActivity} />}
     {tool.protected && !protectedReady && <div className="notice"><b>Acceso protegido.</b> Configura e inicia el servicio local para desbloquear esta herramienta. <button onClick={onRequestAccess}>Introducir código</button></div>}
     {tool.protected && protectedReady && <div className={`notice ${protectedUsable ? "success" : ""}`}><b>{statusText}.</b> {protectedUsable ? "Puedes procesar contenido local." : "El procesamiento está detenido hasta reanudar."} Vence el {session.expiresAt ? new Date(session.expiresAt).toLocaleString("es-MX") : ""}.</div>}
     {tool.id === "resumidor" ? <SummarizerPanel disabled={!protectedUsable} onActivity={recordActivity} initialSource={initialContext?.requestedTool === "resumidor" ? initialContext.selectedText : ""} /> : tool.id === "clases" ? <ClassDownloadPanel disabled={!protectedUsable} onActivity={recordActivity} /> : tool.id === "legal" ? <LegalAnalysisPanel disabled={!protectedUsable} onActivity={recordActivity} initialSource={initialContext?.requestedTool === "legal" ? initialContext.selectedText : ""} /> : null}

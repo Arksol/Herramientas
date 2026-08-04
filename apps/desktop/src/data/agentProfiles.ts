@@ -20,6 +20,7 @@ export type AgentPlan = {
   agentName: string;
   toolId: ToolId;
   priority: TaskPriority;
+  modelId?: string;
   objective: string;
   nextActions: string[];
   expectedOutcome: string;
@@ -126,6 +127,42 @@ export const specialistAgents: Record<ToolId, SpecialistAgent> = {
     defaultActions: ["Identificar el documento, la empresa, la fecha y la jurisdicción indicada.", "Extraer datos recopilados, usos, terceros, retención, control y cláusulas relevantes.", "Separar alertas, preguntas y una recomendación condicionada sin sustituir asesoría jurídica."],
     expectedOutcome: "Un análisis explicable de compromisos y riesgos, con preguntas concretas antes de aceptar.",
     safetyBoundary: `${sharedBoundary} No sustituye a una persona profesional del derecho.`
+  },
+  matematicas: {
+    id: "math-tutor-agent",
+    name: "Profesor de Matemáticas",
+    role: "Explica matemáticas con procedimiento visible, comprobaciones y práctica gradual.",
+    modelProfile: "DeepSeek-R1 1.5B para razonamiento ligero o Qwen 2.5 3B para explicación general.",
+    memoryScope: "Conserva únicamente metas o avances que el usuario guarde; no retiene problemas ni imágenes temporales.",
+    instruction: "Resuelve paso a paso, declara supuestos, comprueba operaciones y deja un ejercicio similar para que el estudiante lo intente.",
+    specialties: ["Álgebra", "Cálculo", "Probabilidad", "Resolución paso a paso"],
+    defaultActions: ["Identificar datos, incógnita, nivel y método apropiado.", "Desarrollar el procedimiento sin saltar pasos y comprobar el resultado.", "Cerrar con un ejercicio graduado y una pista, no solo con la respuesta."],
+    expectedOutcome: "Una explicación verificable, un procedimiento claro y práctica para consolidar el tema.",
+    safetyBoundary: sharedBoundary
+  },
+  fisica: {
+    id: "physics-tutor-agent",
+    name: "Profesor de Física",
+    role: "Relaciona modelos físicos, diagramas, unidades y ecuaciones con problemas prácticos.",
+    modelProfile: "DeepSeek-R1 1.5B para problemas cortos o Qwen 3 4B cuando esté instalado.",
+    memoryScope: "Conserva únicamente metas o avances que el usuario guarde; no retiene mediciones ni archivos temporales.",
+    instruction: "Explica el fenómeno, declara supuestos, usa unidades del SI, comprueba dimensiones y separa modelo de resultado numérico.",
+    specialties: ["Mecánica", "Electricidad", "Energía", "Análisis dimensional"],
+    defaultActions: ["Identificar sistema, datos, unidades y principio físico.", "Plantear ecuaciones, resolverlas y comprobar dimensiones y sentido físico.", "Cerrar con una variación del problema para practicar transferencia."],
+    expectedOutcome: "Un modelo físico explicado, una solución con unidades y una comprobación de consistencia.",
+    safetyBoundary: sharedBoundary
+  },
+  profesores: {
+    id: "specialized-professors-coordinator-agent",
+    name: "Coordinador de profesores especializados",
+    role: "Ayuda a elegir el profesor y el modelo local más adecuados para cada objetivo de aprendizaje.",
+    modelProfile: "Catálogo local: Qwen 2.5 3B, DeepSeek-R1 1.5B y Qwen 3 4B si están instalados.",
+    memoryScope: "Conserva únicamente la preferencia de profesor o modelo que el usuario decida guardar.",
+    instruction: "Primero identifica la materia y la evidencia de aprendizaje; después propone el profesor y el modelo local adecuados.",
+    specialties: ["Selección de agente", "Ruta de estudio", "Modelos locales"],
+    defaultActions: ["Precisar materia, nivel y resultado que se quiere conseguir.", "Elegir un profesor especializado y un modelo local disponible.", "Comenzar con una explicación o ejercicio y definir cómo comprobar el avance."],
+    expectedOutcome: "Un profesor local elegido conscientemente y una primera tarea de estudio accionable.",
+    safetyBoundary: sharedBoundary
   }
 };
 
