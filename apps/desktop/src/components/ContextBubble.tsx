@@ -107,7 +107,7 @@ export default function ContextBubble({ tools, modeLabel, selectedText, paused, 
     };
   }, []);
 
-  const startDrag = (event: PointerEvent<HTMLButtonElement>, source: "toggle" | "handle") => {
+  const startDrag = (event: PointerEvent<HTMLElement>, source: "toggle" | "handle") => {
     const rect = event.currentTarget.closest(".context-bubble")?.getBoundingClientRect();
     if (!rect || event.button !== 0) return;
     dragRef.current = { dx: event.clientX - rect.left, dy: event.clientY - rect.top, source, moved: false, startX: event.clientX, startY: event.clientY };
@@ -118,7 +118,7 @@ export default function ContextBubble({ tools, modeLabel, selectedText, paused, 
 
   const bubble = <aside className={"context-bubble " + (open ? "is-open" : "")} style={style} aria-label="Burbuja contextual de Herramientas">
     {open && <section className="context-bubble-panel">
-      <header className="context-bubble-header">
+      <header className="context-bubble-header bubble-drag-area" onPointerDown={(event) => { if (event.target instanceof HTMLButtonElement) return; startDrag(event, "handle"); }} title="Arrastra este encabezado para mover la burbuja">
         <div><strong>Herramientas</strong><span>{modeLabel}</span></div>
         <button type="button" className="bubble-drag" onPointerDown={(event) => startDrag(event, "handle")} title="Mover burbuja">Mover</button>
       </header>

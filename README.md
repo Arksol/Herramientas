@@ -103,6 +103,8 @@ Consulta la [documentación oficial de la API local de Ollama](https://docs.olla
 
 ## Accesos y Multi profesor
 
+Al iniciar, Herramientas muestra una ventana obligatoria para elegir el tipo de usuario antes de exponer el catálogo de herramientas.
+
 La aplicación tiene dos modos locales:
 
 - **Invitado temporal:** puede usar todas las herramientas durante una sesión de una hora. Sus fuentes, planes y resultados no se guardan; tampoco puede crear herramientas ni configurar Obsidian.

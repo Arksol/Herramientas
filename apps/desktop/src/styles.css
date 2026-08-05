@@ -234,6 +234,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .context-bubble-toggle span { position: absolute; right: 7px; top: 7px; width: 9px; height: 9px; border: 2px solid #16436f; border-radius: 50%; background: #83e2ac; }
 .context-bubble-panel { width: min(360px, calc(100vw - 32px)); padding: 13px; border: 1px solid #527599; border-radius: 10px; background: rgb(10 20 32 / 84%); box-shadow: 0 22px 64px #000b; backdrop-filter: blur(14px); }
 .context-bubble-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.context-bubble-header.bubble-drag-area { cursor: grab; touch-action: none; }
+.context-bubble-header.bubble-drag-area:active { cursor: grabbing; }
 .context-bubble-header div { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
 .context-bubble-header strong { color: #f5f9ff; font-size: 13px; }
 .context-bubble-header span { color: #9eb1c6; font-size: 10px; }
@@ -272,3 +274,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .model-install-note code { color: #dcecff; }
 @media (max-width: 980px) { .professor-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .professor-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } .professor-selection { grid-template-columns: 1fr; } }
+.access-choice-backdrop { z-index: 10020; }
+.access-choice-modal { width: min(720px, 100%); }
+.access-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
+.access-choice-card { display: grid; min-height: 194px; gap: 10px; align-content: start; border: 1px solid #43627e; border-radius: 8px; background: #0a1622; color: #dce9f7; padding: 18px; text-align: left; }
+.access-choice-card:hover:not(:disabled), .access-choice-card:focus-visible { border-color: #86bdf0; background: #112d47; }
+.access-choice-card.administrator { border-color: #52704d; }
+.access-choice-card.administrator:hover:not(:disabled), .access-choice-card.administrator:focus-visible { border-color: #9fcf8e; background: #152a1c; }
+.access-choice-card strong { color: #f2f7fd; font: italic 29px Georgia, serif; font-weight: 400; }
+.access-choice-card span { color: #b7c6d7; font-size: 13px; line-height: 1.5; }
+.access-choice-card b { margin-top: auto; color: #a9d4fc; font-size: 12px; }
+.access-choice-card.administrator b { color: #bce7b2; }
+@media (max-width: 600px) { .access-choice-grid { grid-template-columns: 1fr; } .access-choice-card { min-height: 150px; } }

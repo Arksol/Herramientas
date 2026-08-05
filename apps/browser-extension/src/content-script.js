@@ -209,6 +209,7 @@ function makeDraggable(host, handles, panel, toggle) {
     }
   };
   handles.forEach((handle) => handle.addEventListener("pointerdown", (event) => {
+    if (handle.matches("header") && event.target.closest("button")) return;
     if (event.button !== 0) return;
     const rect = host.getBoundingClientRect();
     drag = { dx: event.clientX - rect.left, dy: event.clientY - rect.top, startX: event.clientX, startY: event.clientY, moved: false, source: handle === toggle ? "toggle" : "handle" };
@@ -256,7 +257,7 @@ function ensureBubble() {
   document.addEventListener("selectionchange", updateSelectionStatus, { passive: true });
   root.querySelector("[data-close]").addEventListener("click", () => { panel.hidden = true; toggle.setAttribute("aria-expanded", "false"); });
   root.querySelector("[data-open]").addEventListener("click", async () => { const response = await sendMessage({ type: "herramientas:open-app" }); status.textContent = response?.ok ? "Herramientas se abrió en una pestaña local." : response?.error ?? "No se pudo abrir Herramientas."; });
-  makeDraggable(host, [root.querySelector("[data-drag]"), toggle], panel, toggle);
+  makeDraggable(host, [root.querySelector("[data-drag]"), root.querySelector("header"), toggle].filter(Boolean), panel, toggle);
 
   root.querySelectorAll("[data-send]").forEach((button) => {
     button.addEventListener("click", async () => {
