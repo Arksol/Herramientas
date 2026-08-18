@@ -17,6 +17,14 @@ try {
   assert.equal(capabilities.status, 200);
   assert.equal(capabilities.headers.get("access-control-allow-origin"), "chrome-extension://smoke-test");
 
+  const professorContext = await request("/api/context/inspect", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Origin: "chrome-extension://smoke-test" },
+    body: JSON.stringify({ origin: "https://example.test", url: "https://example.test/course", title: "Clase de prueba", selectedText: "Un texto seleccionado suficientemente largo para iniciar una práctica con el profesor especializado.", sourceKind: "selection", adapter: "Sitio compatible: Matemáticas", requestedTool: "multi-profesor", consent: true })
+  });
+  assert.equal(professorContext.status, 200);
+  assert.equal((await professorContext.json()).received.requestedTool, "multi-profesor");
+
   const guestResponse = await request("/api/auth/guest", { method: "POST" });
   assert.equal(guestResponse.status, 200);
   const guest = await guestResponse.json();
