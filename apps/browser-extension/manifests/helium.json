@@ -1,0 +1,77 @@
+{
+    "manifest_version":  3,
+    "name":  "Herramientas Contextual for Helium",
+    "short_name":  "Herramientas",
+    "version":  "0.1.0",
+    "description":  "Burbuja contextual local para enviar selección autorizada a Herramientas.",
+    "permissions":  [
+                        "storage",
+                        "activeTab",
+                        "tabs"
+                    ],
+    "host_permissions":  [
+                             "http://127.0.0.1:3030/*",
+                             "http://localhost:3030/*",
+                             "http://127.0.0.1:1420/*",
+                             "http://localhost:1420/*",
+                             "*://*.platzi.com/*",
+                             "*://*.ebac.mx/*",
+                             "*://uvm.class.com/*",
+                             "*://*.class.com/*",
+                             "*://*.mastermind.com/*",
+                             "*://mastermind.ac/*",
+                             "*://*.mastermind.ac/*",
+                             "*://uvmonline.blackboard.com/*",
+                             "*://*.blackboard.com/*",
+                             "*://coursera.org/*",
+                             "*://*.coursera.org/*",
+                             "*://academia.eduardorosas.mx/*",
+                             "*://*.academia.eduardorosas.mx/*",
+                             "*://youtube.com/*",
+                             "*://*.youtube.com/*",
+                             "http://*/*",
+                             "https://*/*",
+                             "*://youtu.be/*"
+                         ],
+    "background":  {
+                       "service_worker":  "background.js",
+                       "type":  "module"
+                   },
+    "action":  {
+                   "default_title":  "Herramientas",
+                   "default_popup":  "popup.html"
+               },
+    "content_scripts":  [
+                            {
+                                "matches":  [
+                                                "http://127.0.0.1:1420/*",
+                                                "http://localhost:1420/*",
+                                                "*://*.platzi.com/*",
+                                                "*://*.ebac.mx/*",
+                                                "*://uvm.class.com/*",
+                                                "*://*.class.com/*",
+                                                "*://*.mastermind.com/*",
+                                                "*://mastermind.ac/*",
+                                                "*://*.mastermind.ac/*",
+                                                "*://uvmonline.blackboard.com/*",
+                                                "*://*.blackboard.com/*",
+                                                "*://coursera.org/*",
+                                                "*://*.coursera.org/*",
+                             "*://academia.eduardorosas.mx/*",
+                             "*://*.academia.eduardorosas.mx/*",
+                                                "*://youtube.com/*",
+                                                "*://*.youtube.com/*",
+                             "http://*/*",
+                             "https://*/*",
+                                                "*://youtu.be/*"
+                                            ],
+                                "js":  [
+                                           "content-script.js"
+                                       ],
+                                "run_at":  "document_idle"
+                            }
+                        ],
+    "content_security_policy":  {
+                                    "extension_pages":  "script-src \u0027self\u0027; object-src \u0027self\u0027; connect-src http://127.0.0.1:3030 http://localhost:3030"
+                                }
+}

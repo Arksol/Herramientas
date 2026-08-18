@@ -1,0 +1,39 @@
+{
+    "name":  "herramientas-desktop",
+    "private":  true,
+    "version":  "0.1.0",
+    "type":  "module",
+    "scripts":  {
+                    "dev":  "vite",
+                    "service":  "node service/server.mjs",
+                    "access-hash":  "node scripts/create-access-hash.mjs",
+                    "build":  "tsc -b \u0026\u0026 vite build",
+                    "preview":  "vite preview",
+                    "tauri":  "tauri",
+                    "extension:build":  "node ../browser-extension/scripts/build-extension.mjs",
+                    "extension:verify":  "node ../browser-extension/scripts/verify-extension.mjs",
+                    "test:smoke":  "node scripts/smoke-test.mjs",
+                    "verify":  "npm run build \u0026\u0026 npm run extension:build \u0026\u0026 npm run extension:verify \u0026\u0026 npm run test:smoke"
+                },
+    "dependencies":  {
+                         "@tauri-apps/api":  "^2.0.0",
+                         "@tauri-apps/cli":  "^2.0.0",
+                         "bcryptjs":  "^2.4.3",
+                         "cookie-parser":  "^1.4.7",
+                         "cors":  "^2.8.5",
+                         "dotenv":  "^16.4.5",
+                         "express":  "^4.21.2",
+                         "express-rate-limit":  "^7.5.0",
+                         "helmet":  "^8.0.0",
+                         "react":  "^18.3.1",
+                         "react-dom":  "^18.3.1",
+                         "zod":  "^3.23.8"
+                     },
+    "devDependencies":  {
+                            "@types/react":  "^18.3.3",
+                            "@types/react-dom":  "^18.3.0",
+                            "@vitejs/plugin-react":  "^6.0.4",
+                            "typescript":  "^5.5.4",
+                            "vite":  "^8.1.5"
+                        }
+}
