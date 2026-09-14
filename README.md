@@ -1,7 +1,6 @@
-﻿# Herramientas
+# Herramientas
 
-Proyecto base para desarrollar herramientas web y automatizaciones relacionadas
-con el estudio, la programación y la organización de información en Obsidian.
+Proyecto base para desarrollar herramientas web y automatizaciones relacionadas con el estudio, la programacion y la organizacion de informacion en Obsidian.
 
 ## Estructura actual
 
@@ -21,15 +20,24 @@ con el estudio, la programación y la organización de información en Obsidian.
 
 ## Estado
 
-La aplicación web es actualmente una plantilla inicial con HTML, CSS y
-JavaScript modular. El ZIP contiene un prototipo independiente de una skill
-para estudiar cursos y generar materiales para Obsidian.
+La aplicacion web es actualmente una plantilla inicial con HTML, CSS y JavaScript modular. El ZIP contiene un prototipo independiente de una skill para estudiar cursos y generar materiales para Obsidian.
 
-## Próxima evolución
+## Proxima evolucion
 
-El proyecto puede crecer hacia una aplicación que integre configuración de
-cursos, recopilación autorizada de recursos, capturas, generación de notas,
-mapas conceptuales y exportación a Obsidian.
+El proyecto puede crecer hacia una aplicacion que integre configuracion de cursos, recopilacion autorizada de recursos, capturas, generacion de notas, mapas conceptuales y exportacion a Obsidian.
 
-Antes de publicar cambios en GitHub deben resolverse las decisiones de
-arquitectura, las pruebas y la integración real de la skill.
+Antes de publicar cambios en GitHub deben resolverse las decisiones de arquitectura, las pruebas y la integracion real de la skill.
+
+## Documentacion
+
+- [Definicion del proyecto](docs/definicion-del-proyecto.md)
+- [IA local multimodal](docs/ia-local-multimodal.md)
+- [Extension de navegador](docs/extension-navegador.md)
+
+## Plataforma prevista
+
+El producto se desarrollara como aplicacion de escritorio local-first, con un sitio web publico complementario desplegado en Vercel. La especificacion esta en [docs/distribucion-desktop-y-web.md](docs/distribucion-desktop-y-web.md).
+
+## Arquitectura de agentes
+
+El plan del producto incorpora agentes locales especializados por herramienta. La especificacion central esta en [Arquitectura de agentes locales](docs/arquitectura-de-agentes.md).

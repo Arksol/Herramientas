@@ -4,7 +4,7 @@ __pycache__/
 *.py[cod]
 .venv/
 
-# Configuración y datos privados
+# Configuracion y datos privados
 .env
 .env.*
 config.yaml
@@ -18,3 +18,12 @@ logs/
 dist/
 build/
 coverage/
+
+# Dependencias y artefactos de la aplicacion de escritorio
+apps/desktop/node_modules/
+apps/desktop/dist/
+apps/desktop/src-tauri/target/
+apps/desktop/*.tsbuildinfo
+
+apps/desktop/.auth.local.json
+apps/desktop/.obsidian.local.json
