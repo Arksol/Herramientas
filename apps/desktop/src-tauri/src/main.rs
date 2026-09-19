@@ -293,6 +293,14 @@ async fn analyze_video_source(source: &str) -> Result<SourceAnalysis, String> {
   Ok(SourceAnalysis { kind: "video".into(), text: sections.join("\n\n"), source_label: path.to_string_lossy().to_string(), used_local_ai: true, notes })
 }
 #[tauri::command]
+fn pick_text_file() -> Option<String> {
+  rfd::FileDialog::new()
+    .add_filter("Archivos legibles", &["pdf", "txt", "md", "markdown", "csv", "json", "jsonl", "log", "rs", "ts", "tsx", "js", "jsx", "py", "html", "css", "toml", "yaml", "yml", "xml", "srt", "vtt"])
+    .pick_file()
+    .map(|path| path.to_string_lossy().into_owned())
+}
+
+#[tauri::command]
 async fn analyze_source(kind: String, source: String, state: State<'_, Mutex<AuthState>>) -> Result<SourceAnalysis, String> {
   {
     let mut auth = state.lock().map_err(|_| "No se pudo acceder a la sesion local.")?;
@@ -654,7 +662,7 @@ fn main() {
       app.manage(Mutex::new(AuthState { access_code_hash: config.access_code_hash, session: None, failures: 0, locked_until: None, config_path }));
       Ok(())
     })
-    .invoke_handler(tauri::generate_handler![auth_status, auth_configure, auth_login, auth_pause, auth_resume, auth_activity, auth_logout, summarize_text, get_obsidian_status, configure_obsidian, test_obsidian_connection, save_to_obsidian, append_to_obsidian, get_obs_status, launch_obs_studio, get_local_ai_status, analyze_source])
+    .invoke_handler(tauri::generate_handler![pick_text_file, auth_status, auth_configure, auth_login, auth_pause, auth_resume, auth_activity, auth_logout, summarize_text, get_obsidian_status, configure_obsidian, test_obsidian_connection, save_to_obsidian, append_to_obsidian, get_obs_status, launch_obs_studio, get_local_ai_status, analyze_source])
     .run(tauri::generate_context!())
     .expect("error al ejecutar Herramientas");
 }

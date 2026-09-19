@@ -9,6 +9,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import helmet from "helmet";
+import { PDFParse } from "pdf-parse";
 import { z } from "zod";
 import { compactText, looksLikeTranscript, parseTranscriptText } from "./transcript.mjs";
 
@@ -126,7 +127,17 @@ function stripHtml(html) {
 }
 
 function allowedTextFile(filePath) {
-  return /\.(txt|md|markdown|csv|json|jsonl|log|rs|ts|tsx|js|jsx|py|html|css|toml|yaml|yml|xml|srt|vtt)$/i.test(filePath);
+  return /\.(pdf|txt|md|markdown|csv|json|jsonl|log|rs|ts|tsx|js|jsx|py|html|css|toml|yaml|yml|xml|srt|vtt)$/i.test(filePath);
+}
+
+async function extractPdfText(data) {
+  const parser = new PDFParse({ data });
+  try {
+    const result = await parser.getText();
+    return compactText(result.text);
+  } finally {
+    await parser.destroy();
+  }
 }
 
 async function analyzeLink(source) {
@@ -134,8 +145,15 @@ async function analyzeLink(source) {
   if (!["http:", "https:"].includes(url.protocol)) throw new Error("Solo se aceptan links http o https.");
   const response = await fetch(url);
   if (!response.ok) throw new Error(`El sitio respondio con estado ${response.status}.`);
-  const html = await response.text();
-  if (html.length > 2_000_000) throw new Error("La pagina supera el limite local de 2 MB.");
+  const contentType = response.headers.get("content-type") ?? "";
+  const body = Buffer.from(await response.arrayBuffer());
+  if (body.byteLength > 10 * 1024 * 1024) throw new Error("La pagina o PDF supera el limite local de 10 MB.");
+  if (contentType.includes("application/pdf") || url.pathname.toLowerCase().endsWith(".pdf")) {
+    const text = await extractPdfText(body);
+    if (text.length < 40) throw new Error("No se encontro suficiente texto legible en el PDF.");
+    return { kind: "link", text, sourceLabel: url.toString(), usedLocalAi: false, notes: ["PDF descargado y texto extraido localmente."] };
+  }
+  const html = body.toString("utf8");
   const text = compactText(stripHtml(html));
   if (text.length < 40) throw new Error("No se encontro suficiente texto legible en el link.");
   return { kind: "link", text, sourceLabel: url.toString(), usedLocalAi: false, notes: ["HTML descargado y limpiado localmente."] };
@@ -147,6 +165,11 @@ async function analyzeFile(source) {
   const stat = await fs.stat(filePath);
   if (!stat.isFile()) throw new Error("Indica la ruta completa de un archivo local existente.");
   if (stat.size > 2 * 1024 * 1024) throw new Error("El archivo supera el limite local de 2 MB.");
+  if (/\.pdf$/i.test(filePath)) {
+    const text = await extractPdfText(await fs.readFile(filePath));
+    if (text.length < 40) throw new Error("El PDF no contiene suficiente texto legible para analizar.");
+    return { kind: "file", text, sourceLabel: filePath, usedLocalAi: false, notes: ["Texto del PDF extraido localmente."] };
+  }
   const content = await fs.readFile(filePath, "utf8");
   const transcript = looksLikeTranscript(content, filePath);
   const text = transcript ? parseTranscriptText(content) : compactText(content);

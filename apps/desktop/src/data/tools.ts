@@ -4,7 +4,8 @@ export type ToolId =
   | "ingles"
   | "tecnologia"
   | "visuales"
-  | "codigo";
+  | "codigo"
+  | "lector";
 
 export type ToolAgent = {
   id: string;
@@ -116,6 +117,21 @@ export const tools: Tool[] = [
       role: "Analiza requisitos, errores y estructura para crear prompts tecnicos seguros y verificables.",
       modelProfile: "Modelo local de codigo; ClawCode candidato para orquestacion futura.",
       memoryScope: "Stacks preferidos, reglas de seguridad, formato de prompts y criterios de aceptacion."
+    }
+  },
+  {
+    id: "lector",
+    number: "07",
+    icon: "RF",
+    name: "Lector de archivos",
+    description: "Lee archivos de texto locales y explica su contenido usando un modelo LLM local.",
+    contextual: "Analiza el texto que selecciones y devuelve una lectura clara y estructurada.",
+    agent: {
+      id: "file-reader-agent",
+      name: "Agente Lector de Archivos",
+      role: "Extrae texto de archivos locales, identifica su estructura y responde preguntas sin enviar el contenido fuera del equipo.",
+      modelProfile: "qwen2.5:3b-instruct-q4_K_M",
+      memoryScope: "Solo la lectura actual; no conserva el contenido del archivo."
     }
   }
 ];
