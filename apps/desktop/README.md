@@ -27,7 +27,11 @@ Investigar y elegir una estrategia para construir una aplicación de escritorio 
 En desarrollo, copia `.env.example` como `.env`, genera el hash con `npm run access-hash -- "tu-código"`, ejecuta `npm run service` y, en otra terminal, `npm run dev`.
 ## Resumidor académico inicial
 
-La primera herramienta protegida ya resume texto pegado de forma local y no requiere Ollama ni conexión a internet. El guardado en Obsidian aparece como una integración pendiente: se habilitará cuando se configure una API local autorizada y el selector de bóveda, nota y destino.
+La aplicación también puede leer archivos de texto y PDFs locales de hasta 10 MB. El PDF se carga al servicio Node que corre en `127.0.0.1`, se extrae con `pdf-parse` y vuelve al navegador para la lectura literal con las voces del sistema. El contenido no se envía a servicios externos.
+
+### OBS Studio local
+
+El servicio local detecta y abre OBS Studio en las rutas habituales de Windows. Si OBS está instalado en otra ubicación, define `HERRAMIENTAS_OBS_PATH` con la ruta completa a `obs64.exe` antes de iniciar `npm run service`. La herramienta solo abre OBS; la persona inicia y detiene la grabación manualmente y debe contar con autorización.
 ## Conectar Obsidian
 
 1. Reinicia Obsidian después de instalar el complemento **Local REST API with MCP** en la bóveda deseada.

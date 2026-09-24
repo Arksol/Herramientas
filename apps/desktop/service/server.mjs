@@ -1,5 +1,6 @@
 ﻿import crypto from "node:crypto";
 import fs from "node:fs/promises";
+import { spawn } from "node:child_process";
 import https from "node:https";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -35,6 +36,8 @@ const COOKIE_NAME = "herramientas_session";
 const OLLAMA_ENDPOINT = process.env.HERRAMIENTAS_OLLAMA_ENDPOINT ?? "http://127.0.0.1:11434";
 const TEXT_MODEL = process.env.HERRAMIENTAS_TEXT_MODEL ?? "qwen2.5:3b-instruct-q4_K_M";
 const OBSIDIAN_ENDPOINT = process.env.HERRAMIENTAS_OBSIDIAN_ENDPOINT ?? "https://127.0.0.1:27124";
+const MAX_LOCAL_UPLOAD_BYTES = 10 * 1024 * 1024;
+const OBS_PATH_OVERRIDE = process.env.HERRAMIENTAS_OBS_PATH?.trim();
 const sessions = new Map();
 const attempts = new Map();
 const latestContexts = new Map();
@@ -134,7 +137,7 @@ app.disable("x-powered-by");
 app.use(helmet({ crossOriginResourcePolicy: false }));
 const validOrigins = new Set([allowedOrigin, "http://localhost:5175", "http://127.0.0.1:5175"]);
 app.use(cors({ origin: (origin, callback) => callback(null, !origin || validOrigins.has(origin)), credentials: true, methods: ["GET", "POST"] }));
-app.use(express.json({ limit: "512kb" }));
+app.use(express.json({ limit: "14mb" }));
 app.use(cookieParser());
 
 function error(res, status, code, message) {
@@ -201,6 +204,40 @@ function allowedTextFile(filePath) {
   return /\.(pdf|txt|md|markdown|csv|json|jsonl|log|rs|ts|tsx|js|jsx|py|html|css|toml|yaml|yml|xml|srt|vtt)$/i.test(filePath);
 }
 
+function obsCandidates() {
+  return [
+    OBS_PATH_OVERRIDE,
+    process.env.ProgramFiles ? path.join(process.env.ProgramFiles, "obs-studio", "bin", "64bit", "obs64.exe") : null,
+    process.env["ProgramFiles(x86)"] ? path.join(process.env["ProgramFiles(x86)"], "obs-studio", "bin", "64bit", "obs64.exe") : null,
+    process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, "Programs", "obs-studio", "bin", "64bit", "obs64.exe") : null
+  ].filter(Boolean);
+}
+
+async function findObsPath() {
+  for (const candidate of obsCandidates()) {
+    try {
+      await fs.access(candidate);
+      return candidate;
+    } catch {
+      // Continua con la siguiente ruta local conocida.
+    }
+  }
+  return null;
+}
+
+async function openObsStudio(outputFolder) {
+  const obsPath = await findObsPath();
+  if (!obsPath) throw new Error("OBS Studio no esta instalado en una ruta conocida. Instalalo o define HERRAMIENTAS_OBS_PATH con la ruta de obs64.exe.");
+  const folder = outputFolder.trim();
+  if (folder) {
+    const stat = await fs.stat(folder).catch(() => null);
+    if (!stat?.isDirectory()) throw new Error("La carpeta local indicada para la grabacion no existe.");
+  }
+  const child = spawn(obsPath, [], { detached: true, stdio: "ignore", windowsHide: false });
+  child.unref();
+  return obsPath;
+}
+
 async function extractPdfText(data) {
   const parser = new PDFParse({ data });
   try {
@@ -246,6 +283,25 @@ async function analyzeFile(source) {
   const text = transcript ? parseTranscriptText(content) : compactText(content);
   if (text.length < 40) throw new Error("El archivo no contiene suficiente texto para resumir.");
   return { kind: "file", text, sourceLabel: filePath, usedLocalAi: false, notes: [transcript ? "Transcripcion VTT/SRT parseada localmente." : "Archivo de texto leido localmente."] };
+}
+
+async function analyzeUploadedFile(fileName, encodedData) {
+  const normalizedName = String(fileName ?? "archivo").trim() || "archivo";
+  const raw = String(encodedData ?? "").replace(/^data:.*;base64,/, "");
+  if (!raw || raw.length > Math.ceil((MAX_LOCAL_UPLOAD_BYTES * 4) / 3) + 32) throw new Error("El archivo local supera el limite de 10 MB.");
+  const data = Buffer.from(raw, "base64");
+  if (!data.length || data.length > MAX_LOCAL_UPLOAD_BYTES) throw new Error("El archivo local supera el limite de 10 MB.");
+  if (!allowedTextFile(normalizedName)) throw new Error("Este tipo de archivo aun no esta permitido. Usa PDF, txt, md, csv, json, html, codigo, srt o vtt.");
+  if (/\.pdf$/i.test(normalizedName)) {
+    const text = await extractPdfText(data);
+    if (text.length < 40) throw new Error("El PDF no contiene suficiente texto legible para leerlo.");
+    return { kind: "file", text, sourceLabel: normalizedName, usedLocalAi: false, notes: ["PDF local recibido por el servicio y extraido en este equipo."] };
+  }
+  const content = data.toString("utf8");
+  const transcript = looksLikeTranscript(content, normalizedName);
+  const text = transcript ? parseTranscriptText(content) : compactText(content);
+  if (text.length < 1) throw new Error("El archivo local no contiene texto legible.");
+  return { kind: "file", text, sourceLabel: normalizedName, usedLocalAi: false, notes: [transcript ? "Transcripcion local parseada en este equipo." : "Archivo local leido en este equipo."] };
 }
 
 function splitChunks(text, maxChars = 3600) {
@@ -490,6 +546,22 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", service: "herramientas-local", accessConfigured: Boolean(accessCodeHash) });
 });
 
+app.get("/api/obs/status", requireActiveSession, async (_req, res) => {
+  const obsPath = await findObsPath();
+  res.json({ installed: Boolean(obsPath), path: obsPath });
+});
+
+app.post("/api/obs/open", requireActiveSession, async (req, res) => {
+  const parsed = z.object({ classTitle: z.string().trim().min(1).max(200), outputFolder: z.string().trim().max(1000).default("") }).safeParse(req.body);
+  if (!parsed.success) return error(res, 400, "INVALID_OBS_INPUT", "Indica el nombre de la clase y una carpeta local valida.");
+  try {
+    const obsPath = await openObsStudio(parsed.data.outputFolder);
+    res.json({ opened: true, path: obsPath });
+  } catch (reason) {
+    return error(res, 400, "OBS_OPEN_FAILED", reason instanceof Error ? reason.message : "No se pudo abrir OBS Studio.");
+  }
+});
+
 app.post("/api/summarizer/analyze", requireActiveSession, async (req, res) => {
   const parsed = z.object({ kind: z.enum(["text", "link", "image", "video", "file"]), source: z.string().min(1).max(120000) }).safeParse(req.body);
   if (!parsed.success) return error(res, 400, "INVALID_INPUT", "La informacion enviada no es valida.");
@@ -503,6 +575,16 @@ app.post("/api/summarizer/analyze", requireActiveSession, async (req, res) => {
     return error(res, 501, "DESKTOP_ONLY", "Imagenes y videos requieren la aplicacion de escritorio con Ollama local, ffmpeg y Whisper local cuando aplique.");
   } catch (reason) {
     return error(res, 400, "SOURCE_ANALYSIS_FAILED", reason instanceof Error ? reason.message : "No se pudo analizar la fuente.");
+  }
+});
+
+app.post("/api/summarizer/analyze-upload", requireActiveSession, async (req, res) => {
+  const parsed = z.object({ fileName: z.string().min(1).max(260), data: z.string().min(1).max(14000000) }).safeParse(req.body);
+  if (!parsed.success) return error(res, 400, "INVALID_UPLOAD", "El archivo local no se pudo recibir correctamente.");
+  try {
+    res.json(await analyzeUploadedFile(parsed.data.fileName, parsed.data.data));
+  } catch (reason) {
+    return error(res, 400, "UPLOAD_ANALYSIS_FAILED", reason instanceof Error ? reason.message : "No se pudo leer el archivo local.");
   }
 });
 

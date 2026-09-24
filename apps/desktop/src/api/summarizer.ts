@@ -15,6 +15,19 @@ export async function analyzeSource(kind: SourceKind, source: string): Promise<S
   return apiRequest<SourceAnalysis>("/api/summarizer/analyze", { method: "POST", body: JSON.stringify({ kind, source }) });
 }
 
+export async function analyzeUploadedFile(fileName: string, data: ArrayBuffer): Promise<SourceAnalysis> {
+  let binary = "";
+  const bytes = new Uint8Array(data);
+  const chunkSize = 0x8000;
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+  }
+  return apiRequest<SourceAnalysis>("/api/summarizer/analyze-upload", {
+    method: "POST",
+    body: JSON.stringify({ fileName, data: btoa(binary) })
+  });
+}
+
 export async function summarizeText(text: string, title: string): Promise<Summary> {
   return apiRequest<Summary>("/api/summarizer/generate", { method: "POST", body: JSON.stringify({ text, title }) });
 }

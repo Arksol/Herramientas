@@ -117,7 +117,7 @@ function App() {
       <div className="topbar-actions"><button className="settings-button" onClick={() => setSettingsOpen(true)} aria-label="Abrir configuracion" title="Configuracion"><SettingsIcon /></button><span className={`local-badge ${serviceOnline === false ? "offline" : ""}`}>● {serviceOnline === false ? "Sin servicio" : "Local"}</span>{session.authenticated ? <button className="text-button" onClick={logout}>Cerrar sesion</button> : <button className="text-button" onClick={() => { setRegisteredOpen(true); setRegisteredError(""); }}>Iniciar sesion</button>}</div>
     </header>
     <section id="inicio" className="hero">
-      <p className="eyebrow">Aplicacion de escritorio - local-first</p><h1>Herramientas</h1>
+      <p className="eyebrow">Aplicacion web local - local-first</p><h1>Herramientas</h1>
       <p className="lede">Tu espacio privado para aprender, crear y organizar. Elige una herramienta o activa el lanzador contextual.</p>
       <div className="mode-switch" role="group" aria-label="Modo de operacion"><button className={mode === "integrated" ? "selected" : ""} onClick={() => setMode("integrated")}>Dentro de Herramientas</button><button className={mode === "third-party" ? "selected" : ""} onClick={() => setMode("third-party")}>Herramientas de 3ros</button><button className={mode === "contextual" ? "selected" : ""} onClick={() => setMode("contextual")}>Burbuja contextual</button></div>
       <p className="mode-note"><b>{modeLabel}.</b> {selectedText}</p><div className="extension-strip"><span>Extension contextual:</span><b>Chrome Dev</b><b>Firefox</b><b>Helium</b></div>

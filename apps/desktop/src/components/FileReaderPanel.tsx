@@ -1,5 +1,5 @@
 import { ChangeEvent, useEffect, useRef, useState } from "react";
-import { analyzeSource } from "../api/summarizer";
+import { analyzeSource, analyzeUploadedFile } from "../api/summarizer";
 
 type VoiceLanguage = "auto" | "es" | "en";
 
@@ -46,9 +46,14 @@ export default function FileReaderPanel({ disabled = false }: { disabled?: boole
     window.speechSynthesis.cancel();
     try {
       if (sourceKind === "file" && selectedFile) {
-        if (selectedFile.type === "application/pdf" || selectedFile.name.toLowerCase().endsWith(".pdf")) throw new Error("La lectura de PDFs locales en la versión web queda pendiente de integrar en el servicio.");
-        setText((await selectedFile.text()).replace(/\s+/g, " ").trim());
-        setSourceLabel(selectedFile.name);
+        if (selectedFile.type === "application/pdf" || selectedFile.name.toLowerCase().endsWith(".pdf")) {
+          const source = await analyzeUploadedFile(selectedFile.name, await selectedFile.arrayBuffer());
+          setText(source.text);
+          setSourceLabel(source.sourceLabel);
+        } else {
+          setText((await selectedFile.text()).replace(/\s+/g, " ").trim());
+          setSourceLabel(selectedFile.name);
+        }
       } else {
         const source = await analyzeSource(sourceKind, path.trim());
         setText(source.text);
@@ -95,7 +100,7 @@ export default function FileReaderPanel({ disabled = false }: { disabled?: boole
       <label htmlFor="file-reader-path">{sourceKind === "file" ? "Archivo" : "URL"}</label>
       <div className="input-actions"><input id="file-reader-path" value={path} onChange={(event) => { setSelectedFile(null); setPath(event.target.value); }} placeholder={sourceKind === "file" ? "Selecciona un archivo de texto" : "https://ejemplo.com/libro"} disabled={disabled || loading} /><button type="button" className="secondary" onClick={chooseFile} disabled={sourceKind !== "file" || disabled || loading}>Escoger archivo</button><input ref={fileInputRef} type="file" hidden accept=".txt,.md,.markdown,.csv,.json,.jsonl,.log,.rs,.ts,.tsx,.js,.jsx,.py,.html,.css,.toml,.yaml,.yml,.xml,.srt,.vtt,.pdf" onChange={onBrowserFile} /></div>
       <div className="input-actions"><button className="primary" onClick={loadText} disabled={disabled || loading || !path.trim()}>{loading ? "Cargando..." : "Cargar texto"}</button></div>
-      <p className="field-help">El contenido se conserva literalmente para lectura; no se resume ni se explica.</p>
+      <p className="field-help">El contenido se conserva literalmente para lectura; no se resume ni se explica. Los PDFs locales de hasta 10 MB se extraen en este equipo.</p>
       {error && <p className="form-error">{error}</p>}
     </section>
     <aside className="status-panel"><span className="status-dot" /> <b>{speaking ? "Leyendo en voz alta" : text ? "Texto cargado" : "Listo para leer"}</b><p>La voz se genera en este equipo con las voces instaladas del sistema.</p>{sourceLabel && <small>Fuente: {sourceLabel}</small>}</aside>

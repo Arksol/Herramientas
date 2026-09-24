@@ -119,7 +119,7 @@ export default function ClassDownloadPanel({ disabled, onActivity }: Props) {
         <div className="export-actions"><button className="secondary" onClick={copySummary} disabled={disabled || busy}>Copiar Markdown</button><button className="secondary" onClick={downloadSummary} disabled={disabled || busy}>Descargar .md</button></div>
       </> : <>
         <h2>Preparar OBS Studio</h2>
-        <p>{obs?.installed ? "OBS Studio esta disponible en este equipo." : "No encontramos OBS Studio en la ruta habitual. Instalalo o configuralo antes de continuar."}</p>
+        <p>{obs?.installed ? "OBS Studio esta disponible en este equipo y se abrira mediante el servicio local." : "No encontramos OBS Studio en las rutas locales habituales. Instalalo o configura HERRAMIENTAS_OBS_PATH antes de continuar."}</p>
         <div className={`obs-status ${obs?.installed ? "ready" : ""}`}>{obs?.installed ? "OBS detectado" : "OBS no detectado"}</div>
         <ol><li>Abre la clase que tienes permiso para ver y registrar.</li><li>Verifica en OBS la carpeta de salida y la fuente de captura.</li><li>Inicia y deten la grabacion tu mismo desde OBS.</li></ol>
         <button className="secondary" onClick={openObs} disabled={disabled || busy || !obs?.installed}>{busy ? "Abriendo OBS..." : "Abrir OBS Studio"}</button>
