@@ -361,6 +361,8 @@ Se crearÃ¡ un paquete compartido de tipos para `ToolId`, `OperationMode`, `Con
 
 ## ActualizaciÃ³n de plataforma: escritorio local-first y Vercel
 
+Estado vigente: la versiÃ³n activa usa React + Vite en web local, Node/Express como servicio y SQLite para persistencia. La construcciÃ³n de escritorio sin Rust/Tauri queda pendiente y la referencia al contenedor nativo que aparece abajo es histÃ³rica.
+
 El stack se amplÃ­a con **Tauri v2** como contenedor de escritorio para la interfaz React/Vite. El backend local de Node/Express se empaquetarÃ¡ como servicio auxiliar controlado por la aplicaciÃ³n; seguirÃ¡ siendo necesario para la extensiÃ³n contextual y las integraciones locales. La interfaz y tipos reutilizables se compartirÃ¡n con un sitio Vite estÃ¡tico separado para Vercel.
 
 No se moverÃ¡n Ollama, Obsidian, OBS Studio, archivos ni secretos al despliegue de Vercel. El sitio pÃºblico serÃ¡ solo informativo y de distribuciÃ³n.

@@ -36,7 +36,7 @@ Antes de publicar cambios en GitHub deben resolverse las decisiones de arquitect
 
 ## Plataforma prevista
 
-El producto se desarrollara como aplicacion de escritorio local-first, con un sitio web publico complementario desplegado en Vercel. La especificacion esta en [docs/distribucion-desktop-y-web.md](docs/distribucion-desktop-y-web.md).
+El producto se desarrolla actualmente como una aplicacion web local-first con un sitio web publico complementario desplegado en Vercel. La futura aplicacion de escritorio sin Rust/Tauri queda como paso pendiente en [docs/distribucion-desktop-y-web.md](docs/distribucion-desktop-y-web.md).
 
 ## Arquitectura de agentes
 

@@ -1,5 +1,5 @@
 {
-    "name": "herramientas-desktop",
+    "name": "herramientas-web",
     "private": true,
     "version": "0.1.0",
     "type": "module",
@@ -10,12 +10,9 @@
         "build": "tsc -b && vite build",
         "test": "node --test service/*.test.mjs",
         "preview": "vite preview",
-        "tauri": "tauri",
         "extension:build": "node ../browser-extension/scripts/build-extension.mjs"
     },
     "dependencies": {
-        "@tauri-apps/api": "^2.0.0",
-        "@tauri-apps/cli": "^2.0.0",
         "bcryptjs": "^2.4.3",
         "cookie-parser": "^1.4.7",
         "cors": "^2.8.5",

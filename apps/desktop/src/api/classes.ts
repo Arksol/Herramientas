@@ -1,17 +1,10 @@
-﻿const isTauri = () => "__TAURI_INTERNALS__" in window;
-
 export type ObsStatus = { installed: boolean; path: string | null };
 
-async function invoke<T>(command: string, payload?: Record<string, string>): Promise<T> {
-  if (!isTauri()) throw new Error("Esta funcion esta disponible desde la aplicacion de escritorio.");
-  const { invoke: nativeInvoke } = await import("@tauri-apps/api/core");
-  return nativeInvoke<T>(command, payload);
-}
-
+// OBS Studio requiere capacidades nativas; queda pendiente para la futura versión de escritorio.
 export function getObsStatus() {
-  return invoke<ObsStatus>("get_obs_status");
+  return Promise.resolve<ObsStatus>({ installed: false, path: null });
 }
 
-export function launchObsStudio(classTitle: string, outputFolder: string) {
-  return invoke<void>("launch_obs_studio", { classTitle, outputFolder });
+export function launchObsStudio(_classTitle: string, _outputFolder: string) {
+  return Promise.reject<void>(new Error("Abrir OBS Studio queda pendiente en la versión web."));
 }

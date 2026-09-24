@@ -132,7 +132,7 @@ async function saveObsidianApiKey(apiKey) {
 
 app.disable("x-powered-by");
 app.use(helmet({ crossOriginResourcePolicy: false }));
-const validOrigins = new Set([allowedOrigin, "http://localhost:1420", "http://127.0.0.1:1420", "http://localhost:5175", "http://127.0.0.1:5175", "tauri://localhost"]);
+const validOrigins = new Set([allowedOrigin, "http://localhost:5175", "http://127.0.0.1:5175"]);
 app.use(cors({ origin: (origin, callback) => callback(null, !origin || validOrigins.has(origin)), credentials: true, methods: ["GET", "POST"] }));
 app.use(express.json({ limit: "512kb" }));
 app.use(cookieParser());

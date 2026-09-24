@@ -26,18 +26,11 @@ export default function FileReaderPanel({ disabled = false }: { disabled?: boole
   const [loading, setLoading] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const isTauri = "__TAURI_INTERNALS__" in window;
 
   useEffect(() => () => window.speechSynthesis.cancel(), []);
 
-  const chooseFile = async () => {
+  const chooseFile = () => {
     if (disabled || loading) return;
-    if (isTauri) {
-      const { invoke } = await import("@tauri-apps/api/core");
-      const selected = await invoke<string | null>("pick_text_file");
-      if (selected) setPath(selected);
-      return;
-    }
     fileInputRef.current?.click();
   };
 
@@ -53,7 +46,7 @@ export default function FileReaderPanel({ disabled = false }: { disabled?: boole
     window.speechSynthesis.cancel();
     try {
       if (sourceKind === "file" && selectedFile) {
-        if (selectedFile.type === "application/pdf" || selectedFile.name.toLowerCase().endsWith(".pdf")) throw new Error("Para leer PDFs desde el navegador, inicia el servicio local o usa la aplicación de escritorio.");
+        if (selectedFile.type === "application/pdf" || selectedFile.name.toLowerCase().endsWith(".pdf")) throw new Error("La lectura de PDFs locales en la versión web queda pendiente de integrar en el servicio.");
         setText((await selectedFile.text()).replace(/\s+/g, " ").trim());
         setSourceLabel(selectedFile.name);
       } else {
@@ -100,7 +93,7 @@ export default function FileReaderPanel({ disabled = false }: { disabled?: boole
       <label htmlFor="file-reader-kind">Tipo de fuente</label>
       <select id="file-reader-kind" value={sourceKind} onChange={(event) => { setSourceKind(event.target.value as "file" | "link"); setSelectedFile(null); setPath(""); }} disabled={disabled || loading}><option value="file">Archivo local</option><option value="link">Página web o PDF remoto</option></select>
       <label htmlFor="file-reader-path">{sourceKind === "file" ? "Archivo" : "URL"}</label>
-      <div className="input-actions"><input id="file-reader-path" value={path} onChange={(event) => { setSelectedFile(null); setPath(event.target.value); }} placeholder={sourceKind === "file" ? "C:\\Documentos\\libro.pdf" : "https://ejemplo.com/libro"} disabled={disabled || loading} /><button type="button" className="secondary" onClick={chooseFile} disabled={sourceKind !== "file" || disabled || loading}>Escoger archivo</button><input ref={fileInputRef} type="file" hidden accept=".pdf,.txt,.md,.markdown,.csv,.json,.jsonl,.log,.rs,.ts,.tsx,.js,.jsx,.py,.html,.css,.toml,.yaml,.yml,.xml,.srt,.vtt" onChange={onBrowserFile} /></div>
+      <div className="input-actions"><input id="file-reader-path" value={path} onChange={(event) => { setSelectedFile(null); setPath(event.target.value); }} placeholder={sourceKind === "file" ? "Selecciona un archivo de texto" : "https://ejemplo.com/libro"} disabled={disabled || loading} /><button type="button" className="secondary" onClick={chooseFile} disabled={sourceKind !== "file" || disabled || loading}>Escoger archivo</button><input ref={fileInputRef} type="file" hidden accept=".txt,.md,.markdown,.csv,.json,.jsonl,.log,.rs,.ts,.tsx,.js,.jsx,.py,.html,.css,.toml,.yaml,.yml,.xml,.srt,.vtt,.pdf" onChange={onBrowserFile} /></div>
       <div className="input-actions"><button className="primary" onClick={loadText} disabled={disabled || loading || !path.trim()}>{loading ? "Cargando..." : "Cargar texto"}</button></div>
       <p className="field-help">El contenido se conserva literalmente para lectura; no se resume ni se explica.</p>
       {error && <p className="form-error">{error}</p>}

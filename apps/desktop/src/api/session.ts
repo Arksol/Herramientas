@@ -16,13 +16,6 @@ export type Session = {
 export type RegistrationResult = { registered: boolean; identifier: string; twoFactor: { type: "TOTP"; issuer: string; secret: string; otpauthUri: string }; next: string };
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:3030";
-const isTauri = () => "__TAURI_INTERNALS__" in window;
-
-async function native<T>(command: string, args?: Record<string, unknown>): Promise<T> {
-  const { invoke } = await import("@tauri-apps/api/core");
-  return invoke<T>(command, args);
-}
-
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, { credentials: "include", headers: { "Content-Type": "application/json", ...(options.headers ?? {}) }, ...options });
   const body = response.status === 204 ? null : await response.json();
@@ -31,13 +24,13 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const sessionApi = {
-  get: () => isTauri() ? native<Session>("auth_status") : request<Session>("/api/auth/session"),
-  configure: (accessCode: string) => isTauri() ? native<Session>("auth_configure", { accessCode }) : request<Session>("/api/auth/configure", { method: "POST", body: JSON.stringify({ accessCode }) }),
-  login: (accessCode: string) => isTauri() ? native<Session>("auth_login", { accessCode }) : request<Session>("/api/auth/login", { method: "POST", body: JSON.stringify({ accessCode }) }),
+  get: () => request<Session>("/api/auth/session"),
+  configure: (accessCode: string) => request<Session>("/api/auth/configure", { method: "POST", body: JSON.stringify({ accessCode }) }),
+  login: (accessCode: string) => request<Session>("/api/auth/login", { method: "POST", body: JSON.stringify({ accessCode }) }),
   register: (identifier: string, password: string) => request<RegistrationResult>("/api/auth/register", { method: "POST", body: JSON.stringify({ identifier, password }) }),
   loginRegistered: (identifier: string, password: string, totpCode: string) => request<Session>("/api/auth/login-registered", { method: "POST", body: JSON.stringify({ identifier, password, totpCode }) }),
-  pause: () => isTauri() ? native<Session>("auth_pause") : request<Session>("/api/auth/pause", { method: "POST" }),
-  resume: () => isTauri() ? native<Session>("auth_resume") : request<Session>("/api/auth/resume", { method: "POST" }),
-  activity: () => isTauri() ? native<Session>("auth_activity") : request<Session>("/api/auth/activity", { method: "POST" }),
-  logout: () => isTauri() ? native<void>("auth_logout") : request<void>("/api/auth/logout", { method: "POST" })
+  pause: () => request<Session>("/api/auth/pause", { method: "POST" }),
+  resume: () => request<Session>("/api/auth/resume", { method: "POST" }),
+  activity: () => request<Session>("/api/auth/activity", { method: "POST" }),
+  logout: () => request<void>("/api/auth/logout", { method: "POST" })
 };

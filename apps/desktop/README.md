@@ -1,6 +1,6 @@
-# Herramientas Desktop
+# Herramientas Web Local
 
-Base local de la aplicación de escritorio de **Herramientas**.
+Aplicación web local de **Herramientas** construida con React, TypeScript y Vite.
 
 ## Desarrollo de la interfaz
 
@@ -15,19 +15,16 @@ npm run dev
 npm run build
 ```
 
-## Aplicación de escritorio
+## Estado de escritorio
 
-La estructura de Tauri v2 está en `src-tauri/`. Para ejecutar o generar un instalador se requiere tener Rust/Cargo y los requisitos de Tauri instalados en el equipo.
+La aplicación se ejecuta actualmente como web local con React + Vite y se comunica con el servicio Node/Express en loopback. El contenedor Rust/Tauri fue retirado para mantener el stack web definido.
 
-```bash
-npm run tauri dev
-npm run tauri build
-```
+### Paso pendiente
 
-Los modelos locales, Obsidian, OBS Studio, la extensión contextual y Vercel se conectarán en etapas posteriores. Esta base no transmite archivos ni datos a servicios externos.
+Investigar y elegir una estrategia para construir una aplicación de escritorio sin Rust/Tauri, conservando React + Vite, Node/Express, SQLite, la lectura de archivos, Ollama y las integraciones autorizadas. Hasta completar ese diseño no se genera un instalador nativo.
 ## Servicio local y acceso protegido
 
-En desarrollo, copia `.env.example` como `.env`, genera el hash con `npm run access-hash -- "tu-código"` y ejecuta `npm run service`. La aplicación de escritorio instalada no depende de ese proceso: configura el código una sola vez desde la primera herramienta protegida y Tauri guarda únicamente su hash en el directorio local de datos de la aplicación.
+En desarrollo, copia `.env.example` como `.env`, genera el hash con `npm run access-hash -- "tu-código"`, ejecuta `npm run service` y, en otra terminal, `npm run dev`.
 ## Resumidor académico inicial
 
 La primera herramienta protegida ya resume texto pegado de forma local y no requiere Ollama ni conexión a internet. El guardado en Obsidian aparece como una integración pendiente: se habilitará cuando se configure una API local autorizada y el selector de bóveda, nota y destino.
@@ -38,4 +35,4 @@ La primera herramienta protegida ya resume texto pegado de forma local y no requ
 3. En el Resumidor académico, pega la clave una sola vez en **Conectar Obsidian**.
 4. Genera un resumen e indica una ruta relativa, por ejemplo `Resúmenes/Clase 1.md`.
 
-La clave se almacena en el Administrador de credenciales de Windows; no se añade a `.env`, Git ni a una nota.
+La clave se almacena en el servicio local; no se añade a `.env`, Git ni a una nota.

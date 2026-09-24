@@ -12,7 +12,7 @@ Personas que estudian, programan y organizan información desde una aplicación 
 
 ## Product Purpose
 
-Herramientas reúne agentes especializados para leer documentos, estudiar, trabajar con código, crear prompts, organizar conocimiento y conectar servicios desde un mismo espacio de escritorio y web.
+Herramientas reúne agentes especializados para leer documentos, estudiar, trabajar con código, crear prompts, organizar conocimiento y conectar servicios desde un mismo espacio web local-first.
 
 ## Positioning
 
@@ -20,7 +20,7 @@ Una capa de trabajo local que permite combinar agentes, modelos locales o de pag
 
 ## Operating Context
 
-La persona trabaja desde Herramientas, una aplicación web y de escritorio con servicio local, extensiones de navegador, Ollama, terminales de Windows/WSL/Python y conexiones autorizadas.
+La persona trabaja desde Herramientas, una aplicación web local con servicio Node/Express, SQLite, extensiones de navegador, Ollama, terminales y conexiones autorizadas.
 
 ## Capabilities and Constraints
 
@@ -48,6 +48,7 @@ El producto se llama Herramientas. La interfaz conserva una identidad oscura, ed
 - Acciones sensibles protegidas por cuenta y permisos.
 - Agentes y modelos intercambiables.
 - La interfaz debe explicar el estado sin esconderlo.
+- La aplicación de escritorio sin Rust/Tauri queda como trabajo pendiente de arquitectura y selección de tecnología.
 
 ## Accessibility & Inclusion
 

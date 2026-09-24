@@ -1,5 +1,7 @@
 # DistribuciÃ³n desktop y sitio web
 
+> Estado actual (septiembre de 2026): la aplicaciÃ³n activa es web local con React + Vite y servicio Node/Express. El contenedor Rust/Tauri fue retirado. Construir una aplicaciÃ³n de escritorio sin Rust/Tauri queda como paso pendiente de investigaciÃ³n; no se debe tratar el instalador anterior como producto vigente.
+
 ## DecisiÃ³n de plataforma
 
 **Herramientas serÃ¡ una aplicaciÃ³n de escritorio local-first.** La versiÃ³n de escritorio serÃ¡ el producto principal: ejecutarÃ¡ las seis herramientas, los modelos locales, los archivos, Obsidian, OBS Studio y el modo contextual. El sitio web publicado en Vercel serÃ¡ un complemento pÃºblico para presentar el proyecto, mostrar las herramientas disponibles y dirigir a las personas a la descarga segura de la aplicaciÃ³n.
