@@ -18,7 +18,7 @@ export type ToolAgent = {
 export type Tool = {
   id: ToolId;
   number: string;
-  icon: string;
+  icon: "synthesis" | "download" | "language" | "technology" | "visual" | "code" | "reader";
   name: string;
   description: string;
   contextual: string;
@@ -30,7 +30,7 @@ export const tools: Tool[] = [
   {
     id: "resumidor",
     number: "01",
-    icon: "AI",
+    icon: "synthesis",
     name: "Resumidor academico y Obsidian",
     description: "Convierte clases, links, imagenes, videos y archivos en notas estructuradas para tu boveda.",
     contextual: "Resume el contenido que selecciones y preparalo para Obsidian.",
@@ -46,7 +46,7 @@ export const tools: Tool[] = [
   {
     id: "clases",
     number: "02",
-    icon: "DL",
+    icon: "download",
     name: "Descarga de clases",
     description: "Gestiona materiales autorizados y prepara grabaciones visibles con OBS.",
     contextual: "Identifica una clase autorizada y ofrece el flujo permitido.",
@@ -62,7 +62,7 @@ export const tools: Tool[] = [
   {
     id: "ingles",
     number: "03",
-    icon: "EN",
+    icon: "language",
     name: "Profesor de ingles C1",
     description: "Practica con memoria local, intereses, archivos y explicaciones adaptadas.",
     contextual: "Convierte una seleccion en una practica personalizada.",
@@ -77,7 +77,7 @@ export const tools: Tool[] = [
   {
     id: "tecnologia",
     number: "04",
-    icon: "IT",
+    icon: "technology",
     name: "Profesor integral de tecnologia",
     description: "Aprende con explicaciones, ejercicios, ejemplos y analisis de archivos locales.",
     contextual: "Explica contenido tecnico que hayas seleccionado.",
@@ -92,7 +92,7 @@ export const tools: Tool[] = [
   {
     id: "visuales",
     number: "05",
-    icon: "VI",
+    icon: "visual",
     name: "Arquitecto de prompts visuales",
     description: "Crea prompts para imagenes y videos a partir de referencias locales.",
     contextual: "Usa imagenes o videos seleccionados como referencia.",
@@ -107,7 +107,7 @@ export const tools: Tool[] = [
   {
     id: "codigo",
     number: "06",
-    icon: "</>",
+    icon: "code",
     name: "Arquitecto de prompts de codigo",
     description: "Transforma requisitos, contexto tecnico y archivos en prompts precisos.",
     contextual: "Usa codigo o documentacion seleccionados sin secretos.",
@@ -122,14 +122,14 @@ export const tools: Tool[] = [
   {
     id: "lector",
     number: "07",
-    icon: "RF",
-    name: "Lector de archivos",
-    description: "Lee archivos de texto locales y explica su contenido usando un modelo LLM local.",
-    contextual: "Analiza el texto que selecciones y devuelve una lectura clara y estructurada.",
+    icon: "reader",
+    name: "Lector general",
+    description: "Lee libros, documentos, páginas web y PDFs literalmente con voz local.",
+    contextual: "Lee en voz alta el contenido que selecciones, sin resumirlo ni alterarlo.",
     agent: {
       id: "file-reader-agent",
-      name: "Agente Lector de Archivos",
-      role: "Extrae texto de archivos locales, identifica su estructura y responde preguntas sin enviar el contenido fuera del equipo.",
+      name: "Agente Lector General",
+      role: "Extrae texto de archivos locales y páginas autorizadas para leerlo literalmente sin enviarlo fuera del equipo.",
       modelProfile: "qwen2.5:3b-instruct-q4_K_M",
       memoryScope: "Solo la lectura actual; no conserva el contenido del archivo."
     }

@@ -1,0 +1,173 @@
+.logout-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #75505a;
+  border-radius: 9px;
+  background: #251820;
+  color: #f0b7b7;
+  padding: 10px 13px;
+  font-size: 12px;
+  transition: border-color .2s, background .2s, color .2s;
+}
+
+.logout-button:hover {
+  border-color: #bd737d;
+  background: #38202a;
+  color: #ffd8d8;
+}
+
+.logout-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Sistema común de acciones: misma altura, ritmo y estados en toda la app. */
+.primary,
+.secondary,
+.logout-button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 10px;
+  padding: 10px 15px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  transition: transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease, color .18s ease;
+}
+
+.primary:not(:disabled):hover,
+.secondary:not(:disabled):hover,
+.logout-button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.primary:not(:disabled):active,
+.secondary:not(:disabled):active,
+.logout-button:not(:disabled):active {
+  transform: translateY(0);
+}
+
+.primary:not(:disabled) {
+  box-shadow: 0 8px 18px rgba(55, 121, 198, .18);
+}
+
+.secondary {
+  border-color: #3c526c;
+  background: #0c1724;
+  color: #c9d9ec;
+}
+
+.secondary:not(:disabled):hover {
+  border-color: #79aef0;
+  background: #142844;
+  color: #eff6ff;
+  box-shadow: 0 7px 18px rgba(5, 16, 29, .28);
+}
+
+.primary:focus-visible,
+.secondary:focus-visible,
+.logout-button:focus-visible,
+.settings-button:focus-visible,
+.text-button:focus-visible {
+  outline: 2px solid #9bcaff;
+  outline-offset: 3px;
+}
+
+.primary:disabled,
+.secondary:disabled,
+.logout-button:disabled {
+  filter: saturate(.55);
+  opacity: .45;
+}
+
+.settings-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease, color .18s ease;
+}
+
+.settings-button:hover {
+  transform: translateY(-1px);
+  border-color: #79aef0;
+  background: #142844;
+  color: #eff6ff;
+}
+
+.text-button {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 8px 10px;
+  transition: background .18s ease, color .18s ease;
+}
+
+.text-button:hover {
+  background: #142844;
+  color: #eff6ff;
+}
+
+.compact-button {
+  min-height: 36px;
+  padding: 8px 11px !important;
+  border-radius: 9px !important;
+  font-size: 11px !important;
+}
+
+.mode-switch button {
+  min-height: 38px;
+  transition: color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.mode-switch button:hover:not(.selected) {
+  color: #e6f0ff;
+  background: #122239;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primary,
+  .secondary,
+  .logout-button,
+  .settings-button,
+  .text-button,
+  .mode-switch button {
+    transition: none;
+  }
+}
+
+.registered-modal {
+  width: min(480px, 100%);
+}
+
+.registered-modal .primary,
+.registered-modal .auth-switch {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.registration-secret {
+  display: grid;
+  gap: 7px;
+  margin: 18px 0 4px;
+  padding: 14px;
+  border: 1px solid #426d5b;
+  border-radius: 11px;
+  background: #10231c;
+  color: #b9e9c9;
+}
+
+.registration-secret span,
+.registration-secret small {
+  color: #91b9a0;
+  line-height: 1.45;
+}
+
+.registration-secret code {
+  overflow-wrap: anywhere;
+  color: #e5fff0;
+  font: 12px/1.5 "DM Mono", monospace;
+  letter-spacing: .08em;
+}

@@ -11,16 +11,20 @@ import express from "express";
 import helmet from "helmet";
 import { PDFParse } from "pdf-parse";
 import { z } from "zod";
+import { createUser, findUser, markUserLogin, openUserDatabase } from "./database.mjs";
 import { compactText, looksLikeTranscript, parseTranscriptText } from "./transcript.mjs";
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(directory, "..", ".env") });
 
 const port = Number(process.env.HERRAMIENTAS_PORT ?? 3030);
-const allowedOrigin = process.env.HERRAMIENTAS_ALLOWED_ORIGIN ?? "http://localhost:1420";
+const allowedOrigin = process.env.HERRAMIENTAS_ALLOWED_ORIGIN ?? "http://localhost:5175";
 const authConfigPath = path.join(directory, "..", ".auth.local.json");
+const usersConfigPath = path.join(directory, "..", ".users.local.json");
+const databasePath = path.join(directory, "..", "data", "herramientas.sqlite");
 const obsidianConfigPath = path.join(directory, "..", ".obsidian.local.json");
 let accessCodeHash = await loadAccessCodeHash();
+const userDatabase = await openUserDatabase(databasePath, usersConfigPath);
 const app = express();
 
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
@@ -34,6 +38,69 @@ const OBSIDIAN_ENDPOINT = process.env.HERRAMIENTAS_OBSIDIAN_ENDPOINT ?? "https:/
 const sessions = new Map();
 const attempts = new Map();
 const latestContexts = new Map();
+
+function base32Encode(buffer) {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let bits = 0;
+  let value = 0;
+  let output = "";
+  for (const byte of buffer) {
+    value = (value << 8) | byte;
+    bits += 8;
+    while (bits >= 5) {
+      output += alphabet[(value >>> (bits - 5)) & 31];
+      bits -= 5;
+    }
+  }
+  if (bits > 0) output += alphabet[(value << (5 - bits)) & 31];
+  return output;
+}
+
+function base32Decode(value) {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let bits = 0;
+  let buffer = 0;
+  const bytes = [];
+  for (const char of value.replace(/=+$/g, "").toUpperCase()) {
+    const index = alphabet.indexOf(char);
+    if (index < 0) throw new Error("El secreto A2F no es valido.");
+    buffer = (buffer << 5) | index;
+    bits += 5;
+    if (bits >= 8) {
+      bytes.push((buffer >>> (bits - 8)) & 255);
+      bits -= 8;
+    }
+  }
+  return Buffer.from(bytes);
+}
+
+function createTotpSecret() {
+  return base32Encode(crypto.randomBytes(20));
+}
+
+function totpCode(secret, timestamp = Date.now()) {
+  const counter = Math.floor(timestamp / 30000);
+  const counterBuffer = Buffer.alloc(8);
+  counterBuffer.writeBigUInt64BE(BigInt(counter));
+  const digest = crypto.createHmac("sha1", base32Decode(secret)).update(counterBuffer).digest();
+  const offset = digest[digest.length - 1] & 15;
+  const number = ((digest[offset] & 127) << 24) | (digest[offset + 1] << 16) | (digest[offset + 2] << 8) | digest[offset + 3];
+  return String(number % 1000000).padStart(6, "0");
+}
+
+function verifyTotp(secret, code) {
+  const normalized = String(code ?? "").replace(/\s/g, "");
+  if (!/^\d{6}$/.test(normalized)) return false;
+  return [-1, 0, 1].some((step) => totpCode(secret, Date.now() + step * 30000) === normalized);
+}
+
+function registeredBenefits() {
+  return ["Herramientas de 3ros", "Agentes configurables", "Modelos y terminales conectables", "Sesión protegida con A2F"];
+}
+
+function registeredSession(user) {
+  return { accountType: "registered", username: user.identifier, benefits: registeredBenefits(), twoFactor: true };
+}
 
 async function loadAccessCodeHash() {
   if (process.env.HERRAMIENTAS_ACCESS_CODE_HASH) return process.env.HERRAMIENTAS_ACCESS_CODE_HASH;
@@ -65,7 +132,7 @@ async function saveObsidianApiKey(apiKey) {
 
 app.disable("x-powered-by");
 app.use(helmet({ crossOriginResourcePolicy: false }));
-const validOrigins = new Set([allowedOrigin, "http://localhost:1420", "http://127.0.0.1:1420", "tauri://localhost"]);
+const validOrigins = new Set([allowedOrigin, "http://localhost:1420", "http://127.0.0.1:1420", "http://localhost:5175", "http://127.0.0.1:5175", "tauri://localhost"]);
 app.use(cors({ origin: (origin, callback) => callback(null, !origin || validOrigins.has(origin)), credentials: true, methods: ["GET", "POST"] }));
 app.use(express.json({ limit: "512kb" }));
 app.use(cookieParser());
@@ -100,7 +167,11 @@ function sessionResponse(session) {
     state: sessionState(session),
     expiresAt: new Date(session.expiresAt).toISOString(),
     lastActivityAt: new Date(session.lastActivityAt).toISOString(),
-    tools: ["resumidor", "clases"]
+    tools: session.accountType === "registered" ? ["resumidor", "clases", "ingles", "tecnologia", "visuales", "codigo", "lector", "third-party"] : ["resumidor", "clases"],
+    accountType: session.accountType ?? "local",
+    username: session.username ?? null,
+    benefits: session.benefits ?? [],
+    twoFactor: Boolean(session.twoFactor)
   };
 }
 
@@ -443,6 +514,35 @@ app.post("/api/summarizer/generate", requireActiveSession, async (req, res) => {
   res.json(result);
 });
 
+app.post("/api/auth/register", async (req, res) => {
+  const parsed = z.object({ identifier: z.string().trim().min(3).max(160), password: z.string().min(10).max(256) }).safeParse(req.body);
+  if (!parsed.success) return error(res, 400, "INVALID_REGISTRATION", "Usa un usuario o correo valido y una contraseña de al menos 10 caracteres.");
+  const identifier = parsed.data.identifier.toLowerCase();
+  if (findUser(userDatabase, identifier)) return error(res, 409, "USER_EXISTS", "Ya existe una cuenta con ese usuario.");
+  const totpSecret = createTotpSecret();
+  const user = { identifier, passwordHash: await bcrypt.hash(parsed.data.password, 12), totpSecret, createdAt: new Date().toISOString() };
+  createUser(userDatabase, user);
+  const issuer = "Herramientas";
+  const otpauthUri = `otpauth://totp/${encodeURIComponent(`${issuer}:${identifier}`)}?secret=${totpSecret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
+  res.status(201).json({ registered: true, identifier, twoFactor: { type: "TOTP", issuer, secret: totpSecret, otpauthUri }, next: "Inicia sesión con tu contraseña y el código de Proton Authenticator." });
+});
+
+app.post("/api/auth/login-registered", async (req, res) => {
+  const parsed = z.object({ identifier: z.string().trim().min(3).max(160), password: z.string().min(1).max(256), totpCode: z.string().min(6).max(12) }).safeParse(req.body);
+  if (!parsed.success) return error(res, 400, "INVALID_LOGIN", "Indica usuario, contraseña y el código de Proton Authenticator.");
+  const identifier = parsed.data.identifier.toLowerCase();
+  const user = findUser(userDatabase, identifier);
+  if (!user || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) return error(res, 401, "INVALID_LOGIN", "El usuario o la contraseña no son validos.");
+  if (!verifyTotp(user.totpSecret, parsed.data.totpCode)) return error(res, 401, "INVALID_2FA", "El código A2F no es valido o ya expiro. Usa el código actual de Proton Authenticator.");
+  markUserLogin(userDatabase, identifier);
+  const now = Date.now();
+  const token = crypto.randomUUID();
+  const session = { createdAt: now, lastActivityAt: now, expiresAt: now + SESSION_TTL_MS, paused: false, ...registeredSession(user) };
+  sessions.set(token, session);
+  res.cookie(COOKIE_NAME, token, { httpOnly: true, sameSite: "strict", secure: false, maxAge: SESSION_TTL_MS, path: "/" });
+  res.json(sessionResponse(session));
+});
+
 app.post("/api/auth/configure", async (req, res) => {
   if (accessCodeHash) return error(res, 409, "ACCESS_ALREADY_CONFIGURED", "El codigo de acceso ya fue configurado.");
   const parsed = z.object({ accessCode: z.string().min(8).max(256) }).safeParse(req.body);
@@ -528,7 +628,3 @@ app.listen(port, "127.0.0.1", () => {
   console.log(`Herramientas local API en http://127.0.0.1:${port}`);
   if (!accessCodeHash) console.warn("HERRAMIENTAS_ACCESS_CODE_HASH no esta configurado; el acceso protegido permanecera desactivado.");
 });
-
-
-
-

@@ -26,4 +26,8 @@ apps/desktop/src-tauri/target/
 apps/desktop/*.tsbuildinfo
 
 apps/desktop/.auth.local.json
+apps/desktop/.users.local.json
 apps/desktop/.obsidian.local.json
+apps/desktop/data/*.sqlite
+apps/desktop/data/*.sqlite-shm
+apps/desktop/data/*.sqlite-wal
