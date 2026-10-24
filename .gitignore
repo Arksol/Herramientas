@@ -31,3 +31,6 @@ apps/desktop/.obsidian.local.json
 apps/desktop/data/*.sqlite
 apps/desktop/data/*.sqlite-shm
 apps/desktop/data/*.sqlite-wal
+
+# instrucciones locales de Codex, personales (no se versionan)
+AGENTS.override.md
