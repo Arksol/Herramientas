@@ -14,7 +14,7 @@ export type LocalAiStatus = {
   profiles: LocalAiProfile[];
 };
 
-const apiUrl = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:3030";
+const apiUrl = import.meta.env.VITE_API_URL ?? "";
 export async function getLocalAiStatus(): Promise<LocalAiStatus> {
   const response = await fetch(`${apiUrl}/api/local-ai/status`, { credentials: "include" });
   const body = await response.json();

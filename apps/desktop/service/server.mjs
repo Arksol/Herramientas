@@ -19,11 +19,12 @@ const directory = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(directory, "..", ".env") });
 
 const port = Number(process.env.HERRAMIENTAS_PORT ?? 3030);
+const privateDataPath = process.env.HERRAMIENTAS_DATA_DIR ?? path.join(directory, "..");
 const allowedOrigin = process.env.HERRAMIENTAS_ALLOWED_ORIGIN ?? "http://localhost:5175";
-const authConfigPath = path.join(directory, "..", ".auth.local.json");
-const usersConfigPath = path.join(directory, "..", ".users.local.json");
-const databasePath = path.join(directory, "..", "data", "herramientas.sqlite");
-const obsidianConfigPath = path.join(directory, "..", ".obsidian.local.json");
+const authConfigPath = path.join(privateDataPath, ".auth.local.json");
+const usersConfigPath = path.join(privateDataPath, ".users.local.json");
+const databasePath = path.join(privateDataPath, "data", "herramientas.sqlite");
+const obsidianConfigPath = path.join(privateDataPath, ".obsidian.local.json");
 let accessCodeHash = await loadAccessCodeHash();
 const userDatabase = await openUserDatabase(databasePath, usersConfigPath);
 const app = express();
@@ -706,7 +707,39 @@ app.get("/api/local-ai/status", async (_req, res) => {
   }
 });
 
-app.listen(port, "127.0.0.1", () => {
-  console.log(`Herramientas local API en http://127.0.0.1:${port}`);
-  if (!accessCodeHash) console.warn("HERRAMIENTAS_ACCESS_CODE_HASH no esta configurado; el acceso protegido permanecera desactivado.");
+const webBuildPath = path.join(directory, "..", "dist");
+app.use(express.static(webBuildPath));
+app.get("*", async (req, res, next) => {
+  if (req.path.startsWith("/api/")) return next();
+  try {
+    await fs.access(path.join(webBuildPath, "index.html"));
+    res.sendFile(path.join(webBuildPath, "index.html"));
+  } catch {
+    res.status(503).send("Compila la interfaz con npm run build antes de abrir la aplicación.");
+  }
 });
+
+export function startLocalServer() {
+  return new Promise((resolve, reject) => {
+    const server = app.listen(port, "127.0.0.1", () => {
+      const address = server.address();
+      const localPort = typeof address === "object" ? address.port : port;
+      console.log(`Herramientas local API en http://127.0.0.1:${localPort}`);
+      if (!accessCodeHash) console.warn("HERRAMIENTAS_ACCESS_CODE_HASH no esta configurado; el acceso protegido permanecera desactivado.");
+      resolve({ server, port: localPort });
+    });
+    server.once("error", reject);
+  });
+}
+
+export async function stopLocalServer(server) {
+  await new Promise((resolve, reject) => server.close((reason) => reason ? reject(reason) : resolve()));
+  userDatabase.close();
+}
+
+if (process.env.HERRAMIENTAS_EMBEDDED !== "1") {
+  const running = await startLocalServer();
+  process.once("SIGTERM", () => {
+    void stopLocalServer(running.server).then(() => process.exit(0));
+  });
+}

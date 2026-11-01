@@ -1,6 +1,6 @@
 export type ObsStatus = { installed: boolean; path: string | null };
 
-const apiUrl = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:3030";
+const apiUrl = import.meta.env.VITE_API_URL ?? "";
 
 async function apiRequest<T>(path: string, options: RequestInit = {}) {
   const response = await fetch(`${apiUrl}${path}`, {

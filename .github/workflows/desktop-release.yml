@@ -1,0 +1,46 @@
+name: Actualización de Herramientas
+
+on:
+  push:
+    branches:
+      - codex/desktop-live-sync
+    paths:
+      - apps/desktop/**
+      - .github/workflows/desktop-release.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: herramientas-desktop-release
+  cancel-in-progress: false
+
+jobs:
+  instalar-actualizacion:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: apps/desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - name: Asignar versión de esta actualización
+        shell: pwsh
+        run: npm version "0.1.${{ github.run_number }}" --no-git-tag-version
+      - run: npm run package:win
+      - name: Publicar instalador para la aplicación
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $version = "0.1.${{ github.run_number }}"
+          $tag = "desktop-v$version"
+          Copy-Item -LiteralPath "release/Herramientas Setup $version.exe" -Destination "release/Herramientas-Setup-$version.exe"
+          Copy-Item -LiteralPath "release/Herramientas Setup $version.exe.blockmap" -Destination "release/Herramientas-Setup-$version.exe.blockmap"
+          gh release create $tag "release/Herramientas-Setup-$version.exe" "release/Herramientas-Setup-$version.exe.blockmap" "release/latest.yml" --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "Herramientas $version" --notes "Actualización de escritorio generada desde ${{ github.sha }}." --latest

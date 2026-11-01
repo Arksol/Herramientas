@@ -15,7 +15,7 @@ export type Session = {
 
 export type RegistrationResult = { registered: boolean; identifier: string; twoFactor: { type: "TOTP"; issuer: string; secret: string; otpauthUri: string }; next: string };
 
-const apiUrl = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:3030";
+const apiUrl = import.meta.env.VITE_API_URL ?? "";
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, { credentials: "include", headers: { "Content-Type": "application/json", ...(options.headers ?? {}) }, ...options });
   const body = response.status === 204 ? null : await response.json();

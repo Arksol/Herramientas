@@ -3,6 +3,7 @@
     "private": true,
     "version": "0.1.0",
     "type": "module",
+    "main": "electron/main.cjs",
     "scripts": {
         "dev": "vite",
         "service": "node service/server.mjs",
@@ -10,6 +11,11 @@
         "build": "tsc -b && vite build",
         "test": "node --test service/*.test.mjs",
         "preview": "vite preview",
+        "desktop": "npm run build && electron .",
+        "live": "node scripts/live.mjs",
+        "live:sync": "node scripts/live.mjs --sync",
+        "sync:github": "node scripts/sync-github.mjs",
+        "package:win": "npm run build && electron-builder --win nsis --x64 --publish never",
         "extension:build": "node ../browser-extension/scripts/build-extension.mjs"
     },
     "dependencies": {
@@ -19,17 +25,50 @@
         "dotenv": "^16.4.5",
         "express": "^4.21.2",
         "express-rate-limit": "^7.5.0",
+        "electron-updater": "^6.7.1",
         "helmet": "^8.0.0",
         "pdf-parse": "^2.4.5",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
-        "zod": "^3.23.8"
+        "zod": "^4.6.7"
     },
     "devDependencies": {
         "@types/react": "^18.3.3",
         "@types/react-dom": "^18.3.0",
         "@vitejs/plugin-react": "^6.0.4",
+        "electron": "^45.1.0",
+        "electron-builder": "^26.18.0",
         "typescript": "^5.5.4",
         "vite": "^8.1.5"
+    },
+    "build": {
+        "appId": "com.arksollabs.herramientas",
+        "productName": "Herramientas",
+        "directories": {
+            "output": "release"
+        },
+        "files": [
+            "electron/**",
+            "service/**",
+            "dist/**",
+            "package.json",
+            "!**/*.test.mjs",
+            "!**/.env*",
+            "!data/**"
+        ],
+        "win": {
+            "target": "nsis",
+            "icon": "electron/icon.ico"
+        },
+        "publish": {
+            "provider": "github",
+            "owner": "Arksol",
+            "repo": "Herramientas"
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true,
+            "createDesktopShortcut": true
+        }
     }
 }

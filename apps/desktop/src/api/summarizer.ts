@@ -3,7 +3,7 @@ export type SourceKind = "text" | "link" | "image" | "video" | "file";
 export type SourceAnalysis = { kind: SourceKind; text: string; sourceLabel: string; usedLocalAi: boolean; notes: string[] };
 export type ObsidianStatus = { configured: boolean; endpoint: string; vaultHint: string };
 
-const apiUrl = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:3030";
+const apiUrl = import.meta.env.VITE_API_URL ?? "";
 async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, { credentials: "include", headers: { "Content-Type": "application/json", ...(options.headers ?? {}) }, ...options });
   const body = response.status === 204 ? null : await response.json().catch(() => null);
