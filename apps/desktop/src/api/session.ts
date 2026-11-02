@@ -14,6 +14,7 @@ export type Session = {
 };
 
 export type RegistrationResult = { registered: boolean; identifier: string; twoFactor: { type: "TOTP"; issuer: string; secret: string; otpauthUri: string }; next: string };
+export type TotpResetStartResult = { pending: boolean; pendingId: string; expiresAt: string; twoFactor: { type: "TOTP"; issuer: string; secret: string; otpauthUri: string }; next: string };
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "";
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -29,6 +30,8 @@ export const sessionApi = {
   login: (accessCode: string) => request<Session>("/api/auth/login", { method: "POST", body: JSON.stringify({ accessCode }) }),
   register: (identifier: string, password: string) => request<RegistrationResult>("/api/auth/register", { method: "POST", body: JSON.stringify({ identifier, password }) }),
   loginRegistered: (identifier: string, password: string, totpCode: string) => request<Session>("/api/auth/login-registered", { method: "POST", body: JSON.stringify({ identifier, password, totpCode }) }),
+  startTotpReset: (identifier: string, password: string, accessCode: string) => request<TotpResetStartResult>("/api/auth/totp-reset/start", { method: "POST", body: JSON.stringify({ identifier, password, accessCode }) }),
+  confirmTotpReset: (pendingId: string, totpCode: string) => request<{ reset: boolean; next: string }>("/api/auth/totp-reset/confirm", { method: "POST", body: JSON.stringify({ pendingId, totpCode }) }),
   pause: () => request<Session>("/api/auth/pause", { method: "POST" }),
   resume: () => request<Session>("/api/auth/resume", { method: "POST" }),
   activity: () => request<Session>("/api/auth/activity", { method: "POST" }),

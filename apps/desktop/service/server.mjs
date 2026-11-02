@@ -12,7 +12,7 @@ import express from "express";
 import helmet from "helmet";
 import { PDFParse } from "pdf-parse";
 import { z } from "zod";
-import { createUser, findUser, markUserLogin, openUserDatabase } from "./database.mjs";
+import { createUser, findUser, markUserLogin, openUserDatabase, replaceUserTotpSecret } from "./database.mjs";
 import { compactText, looksLikeTranscript, parseTranscriptText } from "./transcript.mjs";
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
@@ -33,6 +33,8 @@ const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 const IDLE_TTL_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 3;
 const LOCKOUT_MS = 15 * 60 * 1000;
+const TOTP_RESET_TTL_MS = 10 * 60 * 1000;
+const TOTP_RESET_MAX_ATTEMPTS = 5;
 const COOKIE_NAME = "herramientas_session";
 const OLLAMA_ENDPOINT = process.env.HERRAMIENTAS_OLLAMA_ENDPOINT ?? "http://127.0.0.1:11434";
 const TEXT_MODEL = process.env.HERRAMIENTAS_TEXT_MODEL ?? "qwen2.5:3b-instruct-q4_K_M";
@@ -41,6 +43,7 @@ const MAX_LOCAL_UPLOAD_BYTES = 10 * 1024 * 1024;
 const OBS_PATH_OVERRIDE = process.env.HERRAMIENTAS_OBS_PATH?.trim();
 const sessions = new Map();
 const attempts = new Map();
+const pendingTotpResets = new Map();
 const latestContexts = new Map();
 
 function base32Encode(buffer) {
@@ -78,11 +81,11 @@ function base32Decode(value) {
   return Buffer.from(bytes);
 }
 
-function createTotpSecret() {
+export function createTotpSecret() {
   return base32Encode(crypto.randomBytes(20));
 }
 
-function totpCode(secret, timestamp = Date.now()) {
+export function totpCode(secret, timestamp = Date.now()) {
   const counter = Math.floor(timestamp / 30000);
   const counterBuffer = Buffer.alloc(8);
   counterBuffer.writeBigUInt64BE(BigInt(counter));
@@ -92,7 +95,7 @@ function totpCode(secret, timestamp = Date.now()) {
   return String(number % 1000000).padStart(6, "0");
 }
 
-function verifyTotp(secret, code) {
+export function verifyTotp(secret, code) {
   const normalized = String(code ?? "").replace(/\s/g, "");
   if (!/^\d{6}$/.test(normalized)) return false;
   return [-1, 0, 1].some((step) => totpCode(secret, Date.now() + step * 30000) === normalized);
@@ -624,6 +627,60 @@ app.post("/api/auth/login-registered", async (req, res) => {
   sessions.set(token, session);
   res.cookie(COOKIE_NAME, token, { httpOnly: true, sameSite: "strict", secure: false, maxAge: SESSION_TTL_MS, path: "/" });
   res.json(sessionResponse(session));
+});
+
+app.post("/api/auth/totp-reset/start", async (req, res) => {
+  const parsed = z.object({
+    identifier: z.string().trim().min(3).max(160),
+    password: z.string().min(1).max(256),
+    accessCode: z.string().min(1).max(256)
+  }).safeParse(req.body);
+  if (!parsed.success || !accessCodeHash) return error(res, 401, "INVALID_TOTP_RESET", "No se pudo verificar la cuenta y el codigo local.");
+
+  const identifier = parsed.data.identifier.toLowerCase();
+  const user = findUser(userDatabase, identifier);
+  const passwordMatches = user ? await bcrypt.compare(parsed.data.password, user.passwordHash) : false;
+  const accessMatches = await bcrypt.compare(parsed.data.accessCode, accessCodeHash);
+  if (!user || !passwordMatches || !accessMatches) return error(res, 401, "INVALID_TOTP_RESET", "No se pudo verificar la cuenta y el codigo local.");
+
+  const pendingId = crypto.randomUUID();
+  const secret = createTotpSecret();
+  pendingTotpResets.set(pendingId, {
+    identifier,
+    secret,
+    expiresAt: Date.now() + TOTP_RESET_TTL_MS,
+    attempts: 0
+  });
+  const issuer = "Herramientas";
+  const otpauthUri = `otpauth://totp/${encodeURIComponent(`${issuer}:${identifier}`)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
+  res.json({
+    pending: true,
+    pendingId,
+    expiresAt: new Date(Date.now() + TOTP_RESET_TTL_MS).toISOString(),
+    twoFactor: { type: "TOTP", issuer, secret, otpauthUri },
+    next: "Agrega la nueva entrada en Proton Authenticator y confirma con un codigo vigente de 6 digitos."
+  });
+});
+
+app.post("/api/auth/totp-reset/confirm", (req, res) => {
+  const parsed = z.object({ pendingId: z.string().uuid(), totpCode: z.string().regex(/^\d{6}$/) }).safeParse(req.body);
+  if (!parsed.success) return error(res, 400, "INVALID_TOTP_RESET_CODE", "Escribe un codigo vigente de 6 digitos.");
+
+  const pending = pendingTotpResets.get(parsed.data.pendingId);
+  if (!pending || Date.now() >= pending.expiresAt) {
+    pendingTotpResets.delete(parsed.data.pendingId);
+    return error(res, 410, "TOTP_RESET_EXPIRED", "La vinculacion pendiente caduco. Inicia el restablecimiento de nuevo.");
+  }
+  if (!verifyTotp(pending.secret, parsed.data.totpCode)) {
+    pending.attempts += 1;
+    if (pending.attempts >= TOTP_RESET_MAX_ATTEMPTS) pendingTotpResets.delete(parsed.data.pendingId);
+    return error(res, 401, "INVALID_TOTP_RESET_CODE", "El codigo no coincide con la nueva entrada o ya expiro.");
+  }
+
+  const replaced = replaceUserTotpSecret(userDatabase, pending.identifier, pending.secret);
+  pendingTotpResets.delete(parsed.data.pendingId);
+  if (!replaced) return error(res, 404, "TOTP_RESET_NOT_AVAILABLE", "No se encontro la cuenta para completar el cambio.");
+  res.json({ reset: true, next: "La nueva vinculacion de Proton Authenticator ya esta activa. Inicia sesion con el siguiente codigo vigente." });
 });
 
 app.post("/api/auth/configure", async (req, res) => {

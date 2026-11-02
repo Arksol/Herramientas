@@ -74,3 +74,9 @@ export function markUserLogin(database, identifier) {
   database.prepare("UPDATE users SET last_login_at = ? WHERE identifier = ?")
     .run(new Date().toISOString(), identifier);
 }
+
+export function replaceUserTotpSecret(database, identifier, totpSecret) {
+  const result = database.prepare("UPDATE users SET totp_secret = ? WHERE identifier = ?")
+    .run(totpSecret, identifier);
+  return Number(result.changes) === 1;
+}
